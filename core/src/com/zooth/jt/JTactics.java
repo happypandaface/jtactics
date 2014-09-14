@@ -24,6 +24,7 @@ public class JTactics extends ApplicationAdapter {
 		img = new Texture("badlogic.jpg");
     game.create();
     assets.create();
+    game.startGame();
 	}
 
 	@Override

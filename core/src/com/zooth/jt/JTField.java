@@ -12,7 +12,6 @@ import com.badlogic.gdx.math.*;
 public class JTField
 {
   ShapeRenderer sRenderer;
-  SpriteBatch sb;
   float hexSizeRatio = 400f/640f;
 
   float gap = 9;
@@ -39,17 +38,15 @@ public class JTField
 
   public void create()
   {
-    sRenderer = new ShapeRenderer();
-    sb = new SpriteBatch();
+    //sRenderer = new ShapeRenderer();
   }
 
-  public void render(Camera cam)
+  public void render(SpriteBatch sb, Camera cam)
   {
-    sRenderer.begin(ShapeType.Line);
-    sRenderer.setColor(0, 0, 0, 1);
-    sRenderer.circle(50, 50, 50, 50);
-    sRenderer.end();
-    sb.begin();
+    //sRenderer.begin(ShapeType.Line);
+    //sRenderer.setColor(0, 0, 0, 1);
+    //sRenderer.circle(50, 50, 50, 50);
+    //sRenderer.end();
         //Gdx.app.log("gap", ""+width+", "+height+", "+width);
     closestTile = null;
     closestDist = 0;
@@ -63,11 +60,10 @@ public class JTField
       selectedTile = closestTile;
     for (int x = -2; x < 60; ++x)
       for (int y = -2; y < 60; ++y)
-        drawHex(0, x, y);
+        drawHex(sb, 0, x, y);
     for (int x = -2; x < 60; ++x)
       for (int y = -2; y < 60; ++y)
-        drawHex(1, x, y);
-    sb.end();
+        drawHex(sb, 1, x, y);
   }
 
   public Vector2 getMousePos()
@@ -77,7 +73,6 @@ public class JTField
 
   public void checkPos(int off, int x, int y)
   {
-    sb.setColor(1, 0, 0, 1);
     Vector2 mousePos = getMousePos();
     Vector2 tilePos = new Vector2((widthGap)*x+(off==1?xOffset:0)+width/2, heightGap*y+(off==1?yOffset:0)+height/2);
     float currDist = mousePos.cpy().sub(tilePos).len();
@@ -87,7 +82,7 @@ public class JTField
       closestDist = currDist;
     }
   }
-  public void drawHex(int off, int x, int y)
+  public void drawHex(SpriteBatch sb, int off, int x, int y)
   {
     if (selectedTile != null && selectedTile.check(off, x, y))
       sb.setColor(1, .2f, .2f, 1);
@@ -97,5 +92,10 @@ public class JTField
       sb.setColor(0, 0, 0, 1);
 
     sb.draw(JTactics.assets.hex, (widthGap)*x+(off==1?xOffset:0), heightGap*y+(off==1?yOffset:0), width, height);
+  }
+  public Vector2 getPos(JTTile t)
+  {
+    return new Vector2((widthGap)*t.x+(t.off==1?xOffset:0), heightGap*t.y+(t.off==1?yOffset:0));
+    
   }
 }

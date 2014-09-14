@@ -13,6 +13,10 @@ public class JTTile
     this.y = y;
   }
 
+  public boolean check(JTTile t)
+  {
+    return check(t.off, t.x, t.y);
+  }
   public boolean check(int off, int x, int y)
   {
     return (this.off == off)&&
