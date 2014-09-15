@@ -25,6 +25,8 @@ public class Guy
   static int NOTHING = 0;
   static int ATTACK = 1;
   static int MOVE = 2;
+  static int HEAL = 3;
+  static int MAGIC_ATTACK = 4;
   int actionType;
   Guy attackTarget;
   // QoL action queueing
@@ -39,17 +41,6 @@ public class Guy
   public void setGame(JTGame g)
   {
     game = g;
-  }
-
-  public List<JTTile> getAdjTiles(int num)
-  {
-    List<JTTile> tiles = new ArrayList<JTTile>();
-    if (num == 1)
-    {
-      
-      //tiles.add(
-    }
-    return tiles;
   }
   public boolean canMove(JTTile t)
   {
@@ -80,15 +71,39 @@ public class Guy
     }
     return false;
   }
-  public void attack(Guy g)
+  public boolean inRing(JTTile t, int num)
   {
-    if (!inTransit)
+    // check if the target is in the given ring:
+    List<JTTile> ring = getAdjTiles(num);
+    boolean inRing = false;
+    for (int i = 0; i < ring.size(); ++i)
     {
-      if (canMove(g.tile) && game.checkIsMovable(g.tile))
+      JTTile t2 = ring.get(i);
+      if (t2.check(t))
+      {
+        inRing = true;
+        break;
+      }
+    }
+    return inRing;
+  }
+  public boolean canHeal()
+  {
+    return false;
+  }
+  public boolean canRange()
+  {
+    return false;
+  }
+  public void heal(Guy g)
+  {
+    if (!inTransit && canHeal() && ap > 0)
+    {
+      if ((inRing(g.tile, 1) || inRing(g.tile, 2)) && game.checkIsMovable(g.tile))
       {
         destTile = g.tile;
         attackTarget = g;
-        actionType = ATTACK;
+        actionType = HEAL;
         time = 0;
         useAp(1);
         inTransit = true;
@@ -103,13 +118,58 @@ public class Guy
       {
         actionQueue.add(g);
       }
+    }   
+  }
+  public void attack(Guy g)
+  {
+    if (ap > 0)
+    {
+      if (!inTransit)// make sure we're not already taking an action
+      {
+        // make sure the target is traversable
+        if (game.checkIsMovable(g.tile))
+        {
+          // if it's in the inner ring it's a basic attack
+          if (inRing(g.tile, 1))
+          {
+            destTile = g.tile;
+            attackTarget = g;
+            actionType = ATTACK;
+            time = 0;
+            useAp(1);
+            inTransit = true;
+          }else// if it's in the outer ring, it's a ranged attack
+          if (inRing(g.tile, 2) && canRange())
+          {
+            destTile = g.tile;
+            attackTarget = g;
+            actionType = MAGIC_ATTACK;
+            time = 0;
+            useAp(1);
+            inTransit = true;
+          }
+        }
+        if (!inTransit)
+        {
+          // we're still not in an action which means
+          // we couldn't do a move in the chain, clear the rest
+          // so that we don't act irregularly
+          actionQueue.clear();
+        }
+      }else
+      {
+        if (ap-actionQueue.size() > 0)
+        {
+          actionQueue.add(g);
+        }
+      }
     }
   }
   public void moveTo(JTTile t)
   {
     if (!inTransit)
     {
-      if (!t.check(tile) && canMove(t) && game.checkIsMovable(t))
+      if (!t.check(tile) && canMove(t) && game.checkIsMovable(t) && game.guyAt(t) == null)
       {
         destTile = t;
         inTransit = true;
@@ -133,13 +193,16 @@ public class Guy
   {
     ap-=num;
   }
+  // this is also currently used with negative numbers to heal
   public void getDamaged(Guy g, int amnt)
   {
     hp -= amnt;
   }
+  // called when the game starts
   public void reset()
   {
     hp = 3;
+    ap = 0;
   }
 
   public int movesLeft()
@@ -165,7 +228,15 @@ public class Guy
 
   public boolean checkSelect(JTTile t)
   {
-    return (tile.check(t));
+    return checkAt(t);
+  }
+  public boolean checkAt(JTTile t)
+  {
+    return (
+      // if we're not moving, or we're attacking, use the current tile;
+      ((!inTransit || actionType == ATTACK) && tile.check(t)) ||
+      // if we're moving, use the destination
+      (inTransit && actionType == MOVE && destTile.check(t)));
   }
   public boolean okayForTurnEnd()
   {
@@ -201,11 +272,17 @@ public class Guy
           inTransit = false;
           destTile = null;
         }else
-        if (actionType == ATTACK)
+        if (actionType == ATTACK || actionType == MAGIC_ATTACK)
         {
           inTransit = false;
           destTile = null;
           attackTarget.getDamaged(this, 1);
+        }else
+        if (actionType == HEAL)
+        {
+          inTransit = false;
+          destTile = null;
+          attackTarget.getDamaged(this, -1);
         }
         // if there's more in the queue, do the next one
         if (actionQueue.size() > 0)
@@ -213,7 +290,11 @@ public class Guy
           Object nextAction = actionQueue.remove(0);
           if (nextAction instanceof Guy)
           {
-            attack((Guy)nextAction);
+            Guy g = (Guy)nextAction;
+            if (g.controller == controller)
+              heal(g);
+            else
+              attack(g);
           }else
           if (nextAction instanceof JTTile)
           {
@@ -236,6 +317,10 @@ public class Guy
     {
       Vector2 src = game.field.getPos(tile);
       Vector2 dst = game.field.getPos(destTile);
+      if (actionType == HEAL)
+      {
+        pos = src.cpy();
+      }else
       if (actionType == MOVE)
       {
         pos = dst.cpy().sub(src).scl(time).add(src);
@@ -247,6 +332,15 @@ public class Guy
           closeness*4*time*time:
           closeness*4*(time-1f)*(time-1f);
         pos = dst.cpy().sub(src).scl(lenDist).add(src);
+      }else
+      if (actionType == MAGIC_ATTACK)
+      {
+        pos = src.cpy();
+        Fireball fb = new Fireball();
+        float delay = .3f;
+        fb.pos = dst.cpy().sub(src).scl(time<delay?0:(float)Math.sin((time-delay)/(1-delay)*Math.PI/2f)).add(src);
+        fb.tail = dst.cpy().sub(src).scl(time<delay||time>(1-delay)?(delay)*(float)Math.sin(time*Math.PI):(delay)*(float)Math.sin((delay)*Math.PI));
+        game.addProj(fb);
       }
     }else
       pos = game.field.getPos(tile);
@@ -261,6 +355,12 @@ public class Guy
     
     sb.setColor(1, 1, 1, 1);
     drawTex(sb, getTexture(), width, height, 0, 0, pos);
+    if (actionType == HEAL && inTransit)
+    {
+      sb.setColor(1, 1, 1, 1);
+      float size = (float)(Math.sin(time*Math.PI)*1.5f+1f);
+      drawTex(sb, JTactics.assets.glow, width*size, height*size, 0, 0, pos);
+    }
     if (takingTurn)
     {
       // draw the ap
@@ -294,4 +394,11 @@ public class Guy
     sb.draw(t, pos.x+game.field.width/2-width/2+offsetX, pos.y+game.field.height/2-offsetY, width, height);
 
   }
+
+ 
+  public List<JTTile> getAdjTiles(int num)
+  {
+    return tile.getAdjTiles(num);
+  }
+
 }

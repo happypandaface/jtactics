@@ -17,4 +17,9 @@ public class WhiteMage extends Guy
   {
     return JTactics.assets.whiteMage;
   }
+  @Override
+  public boolean canHeal()
+  {
+    return true;
+  }
 }

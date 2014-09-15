@@ -34,6 +34,7 @@ public class JTGame
 
   public void startGame()
   {
+    selectedGuy = null;
     players = new ArrayList<JTPlayer>();
     JTPlayer p = new JTPlayer();
     p.type = JTPlayer.HUMAN;
@@ -131,6 +132,17 @@ public class JTGame
     return (left == 0);
   }
 
+  // returns the first guy at the tile
+  public Guy guyAt(JTTile t)
+  {
+    for (int i = 0; i < objs.size(); ++i)
+    {
+      if (objs.get(i).checkAt(t))
+        return objs.get(i);
+    }
+    return null; 
+  }
+  // sees if that tile has obstacles on it
   public boolean checkIsMovable(JTTile t)
   {
     for (int i = 0; i < obstacles.size(); ++i)
@@ -140,7 +152,43 @@ public class JTGame
     }
     return true; 
   }
-
+  // this function makes an object try to 'target' a tile
+  // this could mean healing the unit there, or 
+  // attacking an enemy at the tile, or simple
+  // moving to the tile
+  public boolean target(Guy guy, JTTile t)
+  {// TODO: return whether the target was legal
+    boolean stillAMove = true;
+    for (int i = 0; i < objs.size(); ++i)
+    {
+      Guy obj = objs.get(i);
+      if (obj.tile.check(t))
+      {
+        stillAMove = false;
+        if (obj.controller != guy.controller)
+        {
+          // try an attack
+          guy.attack(obj);
+        }else
+        {
+          // it's a friendly, try a heal
+          guy.heal(obj);
+        }
+        break;
+      }
+    }
+    if (stillAMove)
+      guy.moveTo(t);
+    return true;
+  }
+  // guys will add projectiles during their step (each frame)
+  // they draw over everything
+  List<Fireball> projectiles;
+  public void addProj(Fireball fb)
+  {
+    fb.setGame(this);
+    projectiles.add(fb);
+  }
   public void render()
   {
 		Gdx.gl.glClearColor(1, 1, 1, 1);
@@ -194,24 +242,31 @@ public class JTGame
         {
           if (Gdx.input.isButtonPressed(1) && selectedGuy != null)
           {
-            // check if this is an attack (or legal):
-            boolean stillAMove = true;
-            for (int i = 0; i < objs.size(); ++i)
-            {
-              Guy obj = objs.get(i);
-              if (obj.tile.check(field.selectedTile))
+            if (currPlayer.type == JTPlayer.HUMAN)
+            {// only issue commands for human player
+              // check if this is an attack (or legal):
+              boolean stillAMove = true;
+              for (int i = 0; i < objs.size(); ++i)
               {
-                stillAMove = false;
-                if (obj.controller != selectedGuy.controller)
+                Guy obj = objs.get(i);
+                if (obj.tile.check(field.selectedTile))
                 {
-                  // do the attack
-                  selectedGuy.attack(obj);
+                  stillAMove = false;
+                  if (obj.controller != selectedGuy.controller)
+                  {
+                    // try an attack
+                    selectedGuy.attack(obj);
+                  }else
+                  {
+                    // it's a friendly, try a heal
+                    selectedGuy.heal(obj);
+                  }
+                  break;
                 }
-                break;
               }
+              if (stillAMove)
+                selectedGuy.moveTo(field.selectedTile);
             }
-            if (stillAMove)
-              selectedGuy.moveTo(field.selectedTile);
           }else
           if (Gdx.input.isButtonPressed(0))
           {
@@ -234,11 +289,90 @@ public class JTGame
           }
         }
       }
+      if (currPlayer.type == JTPlayer.COMPUTER)
+      {// it's a computer, do AI
+        for (int i = 0; i < currPlayersObjs.size(); ++i)
+        {
+          Guy obj = currPlayersObjs.get(i);
+          if (obj.inTransit || obj.movesLeft() > 0)
+          {// it's important to check inTransit
+            // because even if we don't do an action,
+            // we may break at the end (character by character
+            // commands)
+            if (!obj.inTransit)
+            {// don't assign moves to characters in an action
+              // this prevents computers from queueing
+
+              // first check outer ring targets
+              List<JTTile> outerTiles = obj.getAdjTiles(2);
+              for (int c = 0; c < outerTiles.size(); ++c)
+              {
+                JTTile t = outerTiles.get(c);
+                Guy g = guyAt(t);
+                if (g != null && !g.isDead())
+                {
+                  if (!obj.inTransit)
+                    target(obj, t);
+                }
+              }
+
+              // then check inner ring targets
+              if (!obj.inTransit)
+              {
+                List<JTTile> innerTiles = obj.getAdjTiles(1);
+                for (int c = 0; c < innerTiles.size(); ++c)
+                {
+                  JTTile t = innerTiles.get(c);
+                  Guy g = guyAt(t);
+                  if (g != null && !g.isDead())
+                  {
+                    if (!obj.inTransit)
+                      target(obj, t);
+                  }
+                }
+              }
+              if (!obj.inTransit)
+              {// check again, computers REALLY can't handle queueing
+                // if we got to this point we don't have any
+                // other good targets, we should position
+                // so we can fight later (this algorithm will
+                // become more complicated, but now we just walk
+                // towards enemies)
+                List<JTTile> path = null;
+                for (int c = 0; c < objs.size(); ++c)
+                {
+                  Guy currObj = objs.get(c);
+                  if (currObj.controller != obj.controller && !currObj.isDead())
+                  {
+                    List<JTTile> currPath = currObj.tile.getPath(obj.tile, this);
+                    if (path == null || currPath.size() < path.size())
+                      path = currPath;
+                  }
+                }
+                // because the first node in the path, is the
+                // tile we're currently on, we use the second
+                // on
+                JTTile tarTile = path.get(1);
+                target(obj, tarTile);
+                /* random directions:
+                List<JTTile> innerTiles = obj.getAdjTiles(1);
+                
+                JTTile t = innerTiles.get((int)(Math.floor(Math.random()*innerTiles.size())));
+                target(obj, t);
+                */
+              }
+            }
+            //break; // with this break in, the computer does moves one at a time
+          }
+        }
+      }
       for (int i = 0; i < objs.size(); ++i)
       {
         objs.get(i).step(dt); 
       }
     }
+    // now for drawing!!!
+    // draw obstables:
     for (int i = 0; i < obstacles.size(); ++i)
     {
       JTTile t = obstacles.get(i);
@@ -246,6 +380,33 @@ public class JTGame
       sb.setColor(.5f, .2f, .3f, 1);
       sb.draw(JTactics.assets.hex, pos.x, pos.y, field.width, field.height);
     }
+    // only not null if a guy is selected
+    List<JTTile> actionTiles = null;
+    if (selectedGuy != null)
+    {
+      actionTiles = selectedGuy.getAdjTiles(1);
+      sb.setColor(0, 0, 1f, .4f);
+      if (actionTiles != null)
+        for (int i = 0; i < actionTiles.size(); ++i)
+        {
+          JTTile tile = actionTiles.get(i);
+          Vector2 pos = field.getPos(tile);
+          sb.draw(JTactics.assets.hex, pos.x, pos.y, field.width, field.height);
+        }
+      actionTiles = selectedGuy.getAdjTiles(2);
+      sb.setColor(0, 1f, 0f, .4f);
+      if (actionTiles != null)
+        for (int i = 0; i < actionTiles.size(); ++i)
+        {
+          JTTile tile = actionTiles.get(i);
+          Vector2 pos = field.getPos(tile);
+          sb.draw(JTactics.assets.hex, pos.x, pos.y, field.width, field.height);
+        }
+
+    }
+    // reset projectiles array so objs can add them
+    projectiles = new ArrayList<Fireball>();
+    // now for drawing objects:
     // order for draw (lower Y objs in front)
     List<Guy> objsCpy = new ArrayList<Guy>(objs);
     int highestY = 0;
@@ -266,6 +427,15 @@ public class JTGame
       }
       Guy closestObj = objsCpy.remove(drawIdx);
       closestObj.draw(sb, null);
+    }
+    // done calling the draw funct on objects
+    // (which adds projectiles)
+    // this means all the projectiles have been added
+    // just draw them, same order as added
+    for (int i = 0; i < projectiles.size(); ++i)
+    {
+      Fireball fb = projectiles.get(i);
+      fb.draw(sb);
     }
     /* old draw funct
     for (int i = 0; i < objs.size(); ++i)

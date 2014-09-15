@@ -15,6 +15,7 @@ public class JTAssets
   Texture guy;
   Texture glow;
   Texture white;
+  Texture fireball;
   Texture mage;
   Texture whiteMage;
   BitmapFont font;
@@ -25,6 +26,7 @@ public class JTAssets
     guy = new Texture("guy.png");
     glow = new Texture("glow.png");
     mage = new Texture("mage.png");
+    fireball = new Texture("fireball.png");
     whiteMage = new Texture("whiteMage.png");
     {
       Pixmap p = new Pixmap(1, 1, Pixmap.Format.RGBA8888);

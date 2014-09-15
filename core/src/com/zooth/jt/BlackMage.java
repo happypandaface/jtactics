@@ -17,4 +17,9 @@ public class BlackMage extends Guy
   {
     return JTactics.assets.mage;
   }
+  @Override
+  public boolean canRange()
+  {
+    return true;
+  }
 }
