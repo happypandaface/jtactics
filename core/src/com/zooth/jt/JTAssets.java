@@ -4,16 +4,37 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.graphics.Pixmap.Format;
+import com.badlogic.gdx.graphics.g2d.freetype.*;
+import com.badlogic.gdx.graphics.g2d.*;
 
 public class JTAssets
 {
   Texture hex;
   Texture guy;
   Texture glow;
+  Texture white;
+  Texture mage;
+  Texture whiteMage;
+  BitmapFont font;
+
   public void create()
   {
     hex = new Texture("hexTile.png");
     guy = new Texture("guy.png");
     glow = new Texture("glow.png");
+    mage = new Texture("mage.png");
+    whiteMage = new Texture("whiteMage.png");
+    {
+      Pixmap p = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
+      p.setColor(1, 1, 1, 1);
+      p.fill();
+      white = new Texture(p);
+    }
+    {
+      FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("Chunkfive Ex.ttf"));
+      font = generator.generateFont((int)(Gdx.graphics.getWidth()*.05f));
+    }
   }
 }

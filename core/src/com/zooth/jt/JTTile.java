@@ -23,4 +23,8 @@ public class JTTile
     (this.x == x)&&
     (this.y == y);
   }
+  public JTTile copy()
+  {
+    return new JTTile(off, x, y);
+  }
 }
