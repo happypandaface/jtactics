@@ -1,23 +1,54 @@
 package com.zooth.jt;
 
 import java.util.*;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.math.*;
 
 public class JTTile
 {
   int off = 0;
   int x = 0;
   int y = 0;
-
+  static class Direction
+  {
+    static int ZERO = 0;
+    static int N = 1;
+    static int NNE = 2;
+    static int NE = 3;
+    static int NEE = 4;
+    static int E = 5;
+    static int SEE = 6;
+    static int SE = 7;
+    static int SSE = 8;
+    static int S = 9;
+    static int SSW = 10;
+    static int SW = 11;
+    static int SWW = 12;
+    static int W = 13;
+    static int NWW = 14;
+    static int NW = 15;
+    static int NNW = 16;
+    static int NUM_DIRECTIONS = 16;
+  }
+  
   public JTTile(int off, int x, int y)
   {
     this.off = off;
     this.x = x;
     this.y = y;
   }
+  @Override
+  public String toString()
+  {
+    return "["+off+":("+x+", "+y+")]";
+  }
 
   public boolean check(JTTile t)
   {
-    return check(t.off, t.x, t.y);
+    Vector2 src = toTiltedCoords();
+    Vector2 dst = t.toTiltedCoords();
+    return src.x == dst.x && src.y == dst.y;
+    //return check(t.off, t.x, t.y);
   }
   public boolean check(int off, int x, int y)
   {
@@ -28,6 +59,107 @@ public class JTTile
   public JTTile copy()
   {
     return new JTTile(off, x, y);
+  }
+  
+  public Vector2 toTiltedCoords()
+  {
+    Vector2 rtn = new Vector2(this.x+this.y, this.y-this.x);
+    if (this.off == 1)
+      rtn.x += 1;
+    return rtn;
+  }
+  
+  static JTTile fromTiltedCoords(Vector2 v)
+  {
+    JTTile rtn = new JTTile(((int)Math.abs(v.x+v.y))%2, (int)Math.floor((v.x-v.y)/2), (int)Math.floor((v.x+v.y)/2));
+    return rtn;
+  }
+  
+  public int getDirection(JTTile t)
+  {
+    Vector2 src = toTiltedCoords();
+    Vector2 dst = t.toTiltedCoords();
+    int diffX = (int)(dst.x - src.x);
+    int diffY = (int)(dst.y - src.y);
+    int adiffX = (int)Math.abs(diffX);
+    int adiffY = (int)Math.abs(diffY);
+    if (diffX == diffY) // S or N
+    {
+      if (diffX > 0 && diffY > 0)
+        return Direction.N;
+      if (diffX < 0 && diffY < 0)
+        return Direction.S;
+    }else
+    if (diffX == -diffY) // E or W
+    {
+      if (diffX > 0 && diffY < 0)
+        return Direction.E;
+      if (diffX < 0 && diffY > 0)
+        return Direction.W;
+    }else
+    if (diffY == 0) // NE or SW
+    {
+      if (diffX > 0)
+        return Direction.NE;
+      if (diffX < 0)
+        return Direction.SW;
+    }else
+    if (diffX == 0) // NE or SW
+    {
+      if (diffY > 0)
+        return Direction.NW;
+      if (diffY < 0)
+        return Direction.SE;
+    }
+    return Direction.ZERO;
+  }
+  public List<JTTile> direction(int dir, int num)
+  {
+    List <JTTile> tiles = new ArrayList<JTTile>();
+    tiles.add(this.copy());
+    Vector2 curr = toTiltedCoords();
+    for (int i = 0; i < num; ++i)
+    {
+      if (dir == Direction.N)
+      {
+        curr.x++;
+        curr.y++;
+      }else
+      if (dir == Direction.S)
+      {
+        curr.x--;
+        curr.y--;
+      }else
+      if (dir == Direction.E)
+      {
+        curr.x++;
+        curr.y--;
+      }else
+      if (dir == Direction.W)
+      {
+        curr.x--;
+        curr.y++;
+      }else
+      if (dir == Direction.NE)
+      {
+        curr.x++;
+      }else
+      if (dir == Direction.SW)
+      {
+        curr.x--;
+      }else
+      if (dir == Direction.NW)
+      {
+        curr.y++;
+      }else
+      if (dir == Direction.SE)
+      {
+        curr.y--;
+      }
+      JTTile t = fromTiltedCoords(curr);
+      tiles.add(t);
+    }
+    return tiles;
   }
   
   // breadth-first search to get the
@@ -93,7 +225,8 @@ public class JTTile
     }
     return null;
   }
-
+  
+  // this gets a ring around the tile
   public List<JTTile> getAdjTiles(int num)
   {
     List<JTTile> tiles = new ArrayList<JTTile>();

@@ -7,8 +7,8 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 
 public class JTactics extends ApplicationAdapter {
-	SpriteBatch batch;
-	Texture img;
+  SpriteBatch batch;
+  Texture img;
   JTGame game;
   static JTAssets assets;
 	
@@ -20,15 +20,15 @@ public class JTactics extends ApplicationAdapter {
 
 	@Override
 	public void create () {
-		batch = new SpriteBatch();
-		img = new Texture("badlogic.jpg");
-    game.create();
-    assets.create();
-    game.startGame();
+	batch = new SpriteBatch();
+	img = new Texture("badlogic.jpg");
+	game.create();
+	assets.create();
+	game.startGame();
 	}
 
 	@Override
 	public void render () {
-    game.render();
+	game.render();
 	}
 }

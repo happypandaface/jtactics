@@ -27,8 +27,10 @@ public class Guy
   static int MOVE = 2;
   static int HEAL = 3;
   static int MAGIC_ATTACK = 4;
+  static int CAST_FB = 5;
   int actionType;
   Guy attackTarget;
+  List<JTTile> destTiles;
   // QoL action queueing
   List<Object> actionQueue;
 
@@ -97,15 +99,15 @@ public class Guy
   }
   public void heal(Guy g)
   {
-    if (!inTransit && canHeal() && ap > 0)
+    if (!inTransit && canHeal() && ap > 0 && g.hp < 3 && g.hp > 0)
     {
-      if ((inRing(g.tile, 1) || inRing(g.tile, 2)) && game.checkIsMovable(g.tile))
+      if ((inRing(g.tile, 1) || inRing(g.tile, 2)) && game.checkIsMovable(g.tile) && hasAp(2))
       {
         destTile = g.tile;
         attackTarget = g;
         actionType = HEAL;
         time = 0;
-        useAp(1);
+        useAp(2);
         inTransit = true;
       }else
       {
@@ -139,13 +141,13 @@ public class Guy
             useAp(1);
             inTransit = true;
           }else// if it's in the outer ring, it's a ranged attack
-          if (inRing(g.tile, 2) && canRange())
+          if (inRing(g.tile, 2) && canRange() && hasAp(2))
           {
             destTile = g.tile;
             attackTarget = g;
             actionType = MAGIC_ATTACK;
             time = 0;
-            useAp(1);
+            useAp(2);
             inTransit = true;
           }
         }
@@ -209,6 +211,10 @@ public class Guy
   {
     return ap;
   }
+  public boolean hasAp(int num)
+  {
+    return ap >= num;
+  }
   public void newTurn()
   {
     // if we have enough hp, give full ap
@@ -234,7 +240,7 @@ public class Guy
   {
     return (
       // if we're not moving, or we're attacking, use the current tile;
-      ((!inTransit || actionType == ATTACK) && tile.check(t)) ||
+      ((!inTransit || actionType != MOVE) && tile.check(t)) ||
       // if we're moving, use the destination
       (inTransit && actionType == MOVE && destTile.check(t)));
   }
@@ -269,6 +275,11 @@ public class Guy
         if (actionType == MOVE)
         {
           tile = destTile;
+          inTransit = false;
+          destTile = null;
+        }else
+        if (actionType == CAST_FB)
+        {
           inTransit = false;
           destTile = null;
         }else
@@ -309,6 +320,52 @@ public class Guy
   {
     return JTactics.assets.mage;
   }
+  
+  public void castFireBall(JTTile t)
+  {
+    if (!inTransit && hp > 0 && (inRing(t, 1) || inRing(t, 2)) && hasAp(1))
+    {
+      //destTile = t;
+      actionType = CAST_FB;
+      time = 0;
+      useAp(1);
+      inTransit = true;
+      int dir = tile.getDirection(t);
+      List<JTTile> tilesInDir = tile.direction(dir, 2);
+      destTile = tilesInDir.get(tilesInDir.size()-1);
+    }
+  }
+  
+  boolean pickingLocation = false;
+  public boolean checkGUIClick(Vector2 click)
+  {
+    // see if we're pressing a button
+    float width = 50;
+    float height = 50;
+    if (click.x > Gdx.graphics.getWidth()-width && click.y < height)
+    {
+      pickingLocation = !pickingLocation;
+      return true;
+    }
+    // we're selecting a location for a button we already pressed
+    if (pickingLocation)
+    {
+      castFireBall(game.field.selectedTile);
+      pickingLocation = false;
+      return true;
+    }
+    return false;
+  }
+  public void drawGUI(SpriteBatch sb, Camera cam)
+  {
+    float width = 50;
+    float height = 50;
+    if (pickingLocation)
+      sb.setColor(1, 1, 1, 1);
+    else
+      sb.setColor(.5f, .5f, .5f, 1);
+    sb.draw(JTactics.assets.fireball, Gdx.graphics.getWidth()-width, 0, width, height);
+  }
 
   public void draw(SpriteBatch sb, Camera cam)
   {
@@ -334,6 +391,15 @@ public class Guy
         pos = dst.cpy().sub(src).scl(lenDist).add(src);
       }else
       if (actionType == MAGIC_ATTACK)
+      {
+        pos = src.cpy();
+        Fireball fb = new Fireball();
+        float delay = .3f;
+        fb.pos = dst.cpy().sub(src).scl(time<delay?0:(float)Math.sin((time-delay)/(1-delay)*Math.PI/2f)).add(src);
+        fb.tail = dst.cpy().sub(src).scl(time<delay||time>(1-delay)?(delay)*(float)Math.sin(time*Math.PI):(delay)*(float)Math.sin((delay)*Math.PI));
+        game.addProj(fb);
+      }else
+      if (actionType == CAST_FB)
       {
         pos = src.cpy();
         Fireball fb = new Fireball();

@@ -5,9 +5,10 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.*;
 import java.util.*;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.math.*;
+import com.badlogic.gdx.Input.Keys;
 
 public class JTGame
 {
@@ -191,8 +192,8 @@ public class JTGame
   }
   public void render()
   {
-		Gdx.gl.glClearColor(1, 1, 1, 1);
-		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+    Gdx.gl.glClearColor(1, 1, 1, 1);
+    Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
     sb.begin();
     field.render(sb, null);
     // check if the game was won:
@@ -222,14 +223,14 @@ public class JTGame
     if (!gameOver)
     {
       float dt = Gdx.graphics.getDeltaTime();
-      // if we haven't gotten a player
+      // if we haven't gotten a player (start of game)
       if (currPlayer == null)
       {
         switchPlayer(players.get(0));
       }else
       {
         // check to see if it should be someone else's turn
-        if (checkEndTurn())
+        if (checkEndTurn() || Gdx.input.isKeyJustPressed(Keys.SPACE))
         {
           // this guy's turn is over, switch players
           int idx = players.indexOf(currPlayer);
@@ -270,20 +271,27 @@ public class JTGame
           }else
           if (Gdx.input.isButtonPressed(0))
           {
-            // alert the last selected guy
+            // check if the selectedGuy's GUI was clicked
+            boolean guiClicked = false;
             if (selectedGuy != null)
-              selectedGuy.setSelected(false);
-            // find the next one (default: null)
-            selectedGuy = null;
-            for (int i = 0; i < objs.size(); ++i)
+              guiClicked = selectedGuy.checkGUIClick(new Vector2(Gdx.input.getX(),Gdx.graphics.getHeight()-Gdx.input.getY()));
+            if (!guiClicked)
             {
-              Guy obj = objs.get(i);
-              if (obj.checkSelect(field.selectedTile))
+              // alert the last selected guy
+              if (selectedGuy != null)
+                selectedGuy.setSelected(false);
+              // find the next one (default: null)
+              selectedGuy = null;
+              for (int i = 0; i < objs.size(); ++i)
               {
-                selectedGuy = obj;
-                // tell the new guy he was selected
-                selectedGuy.setSelected(true);
-                break;
+                Guy obj = objs.get(i);
+                if (obj.checkSelect(field.selectedTile))
+                {
+                  selectedGuy = obj;
+                  // tell the new guy he was selected
+                  selectedGuy.setSelected(true);
+                  break;
+                }
               }
             }
           }
@@ -437,6 +445,9 @@ public class JTGame
       Fireball fb = projectiles.get(i);
       fb.draw(sb);
     }
+	// now draw the selected guy's GUI
+	if (selectedGuy != null)
+		selectedGuy.drawGUI(sb, null);
     /* old draw funct
     for (int i = 0; i < objs.size(); ++i)
     {
