@@ -77,6 +77,7 @@ public class OpeningCutscene
       Gdx.gl.glClearColor(1, 1, 1, 1);
       Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
       sb.begin();
+      sb.draw(JTactics.assets.openingBG, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
       drawMiddleText(sb, intro[introIdx]);
       sb.end();
       if (Gdx.input.justTouched())

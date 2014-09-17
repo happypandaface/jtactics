@@ -18,6 +18,7 @@ public class JTAssets
   public Texture fireball;
   public Texture mage;
   public Texture whiteMage;
+  public Texture openingBG;
   public BitmapFont font;
 
   public void create()
@@ -28,6 +29,7 @@ public class JTAssets
     mage = new Texture("mage.png");
     fireball = new Texture("fireball.png");
     whiteMage = new Texture("whiteMage.png");
+    openingBG = new Texture("openingBG.png");
     {
       Pixmap p = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
       p.setColor(1, 1, 1, 1);
