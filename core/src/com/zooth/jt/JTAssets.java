@@ -11,14 +11,14 @@ import com.badlogic.gdx.graphics.g2d.*;
 
 public class JTAssets
 {
-  Texture hex;
-  Texture guy;
-  Texture glow;
-  Texture white;
-  Texture fireball;
-  Texture mage;
-  Texture whiteMage;
-  BitmapFont font;
+  public Texture hex;
+  public Texture guy;
+  public Texture glow;
+  public Texture white;
+  public Texture fireball;
+  public Texture mage;
+  public Texture whiteMage;
+  public BitmapFont font;
 
   public void create()
   {

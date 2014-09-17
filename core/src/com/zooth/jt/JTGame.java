@@ -9,17 +9,20 @@ import com.badlogic.gdx.math.*;
 import java.util.*;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.Input.Keys;
+import com.zooth.jt.game.*;
 
 public class JTGame
 {
-  JTField field;
-  List<Guy> objs;
-  List<Guy> currPlayersObjs;
-  SpriteBatch sb;
-  Guy selectedGuy;
-  List<JTPlayer> players;
-  JTPlayer currPlayer = null;
-  List<JTTile> obstacles;
+  public JTField field;
+  public List<Guy> objs;
+  public List<Guy> currPlayersObjs;
+  public SpriteBatch sb;
+  public Guy selectedGuy;
+  public List<JTPlayer> players;
+  public JTPlayer currPlayer = null;
+  public List<JTTile> obstacles;
+  public boolean startedGame;
+  public int winner = -1;
 
   public JTGame()
   {
@@ -32,18 +35,39 @@ public class JTGame
     sb = new SpriteBatch();
     field.create();
   }
-
+  
+  public void endGame()
+  {
+    startGame();
+  }
   public void startGame()
   {
+    // essential variables
+    startedGame = true;
     selectedGuy = null;
     players = new ArrayList<JTPlayer>();
+    obstacles = new ArrayList<JTTile>();
+    objs = new ArrayList<Guy>();
+    // this will make the loop get the first player
+    currPlayer = null;
+    
+    // custom commands
+    setupPlayers();
+    setupObstacles();
+    setupObjs();
+  }
+    
+  public void setupPlayers()
+  {
     JTPlayer p = new JTPlayer();
     p.type = JTPlayer.HUMAN;
     addPlayer(p);
     JTPlayer pc = new JTPlayer();
     pc.type = JTPlayer.COMPUTER;
     addPlayer(pc);
-    obstacles = new ArrayList<JTTile>();
+  }
+  public void setupObstacles()
+  {
     int fieldW = 8;
     int xTopOff = 1;
     int xBotOff = 0;
@@ -55,34 +79,33 @@ public class JTGame
         for (int off = 0; off < 2; ++off)
           if (x+(xBotOff==1?off:0) == 0 || x+(xTopOff==1?off:0) == fieldW-1 || y+(yBotOff==1?off:0) == 0 || y+(yTopOff==1?off:0) == fieldH-1)
             obstacles.add(new JTTile(off, x, y));
-
-    objs = new ArrayList<Guy>();
+  }
+  public void setupObjs()
+  {
     {
       Guy g = new BlackMage();
-      g.setController(p);
+      g.setController(players.get(0));
       g.tile = new JTTile(1, 1, 1);
       addObj(g);
     }
     {
       Guy g = new WhiteMage();
-      g.setController(p);
+      g.setController(players.get(0));
       g.tile = new JTTile(0, 1, 2);
       addObj(g);
     }
     {
       Guy g = new WhiteMage();
-      g.setController(pc);
+      g.setController(players.get(1));
       g.tile = new JTTile(0, 4, 4);
       addObj(g);
     }
     {
       Guy g = new BlackMage();
-      g.setController(pc);
+      g.setController(players.get(1));
       g.tile = new JTTile(1, 4, 3);
       addObj(g);
     }
-    // this will make the loop get the first player
-    currPlayer = null;
   }
   public void  addPlayer(JTPlayer p)
   {
@@ -195,6 +218,11 @@ public class JTGame
     Gdx.gl.glClearColor(1, 1, 1, 1);
     Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
     sb.begin();
+    render(sb);
+    sb.end();
+  }
+  public void render(SpriteBatch sb)
+  {
     field.render(sb, null);
     // check if the game was won:
     // this should check teams eventually
@@ -241,6 +269,7 @@ public class JTGame
       {
         if (field.selectedTile != null)
         {
+          boolean usedMove = false;
           if (Gdx.input.isButtonPressed(1) && selectedGuy != null)
           {
             if (currPlayer.type == JTPlayer.HUMAN)
@@ -256,20 +285,21 @@ public class JTGame
                   if (obj.controller != selectedGuy.controller)
                   {
                     // try an attack
-                    selectedGuy.attack(obj);
+                    usedMove = selectedGuy.attack(obj);
                   }else
                   {
                     // it's a friendly, try a heal
-                    selectedGuy.heal(obj);
+                    usedMove = selectedGuy.heal(obj);
                   }
                   break;
                 }
               }
+              // if it wasn't a heal or an attack, it may be a move:
               if (stillAMove)
-                selectedGuy.moveTo(field.selectedTile);
+                usedMove = selectedGuy.moveTo(field.selectedTile);
             }
           }else
-          if (Gdx.input.isButtonPressed(0))
+          if (Gdx.input.isButtonPressed(0))// && !usedMove)
           {
             // check if the selectedGuy's GUI was clicked
             boolean guiClicked = false;
@@ -460,6 +490,7 @@ public class JTGame
       if (playersLeft.size() == 0)
       {
         // no one won:
+        winner = -1;
         endStr = "Everyone loses!";
       }else
       {
@@ -472,6 +503,7 @@ public class JTGame
             playerNum = i;
           }
         }
+        winner = playerNum;
         endStr = "Player "+(playerNum+1)+" wins!";
       }
       BitmapFont.TextBounds tb = JTactics.assets.font.getWrappedBounds(endStr, Gdx.graphics.getWidth());
@@ -484,10 +516,8 @@ public class JTGame
       JTactics.assets.font.drawWrapped(sb, endStr, midX-tb.width/2f, midY+tb.height/2f, Gdx.graphics.getWidth());
       if (Gdx.input.justTouched())
       {
-        startGame();
+        endGame();
       }
     }
-
-    sb.end();
   }
 }

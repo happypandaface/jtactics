@@ -8,31 +8,32 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.*;
+import com.zooth.jt.game.*;
 import java.util.*;
 
 public class Guy
 {
-  JTTile tile;
-  JTTile destTile;
-  JTGame game;
-  boolean inTransit = false;
-  float time;
-  boolean selected;
-  boolean takingTurn;
-  JTPlayer controller;
-  int ap = 0;
-  int hp = 0;
-  static int NOTHING = 0;
-  static int ATTACK = 1;
-  static int MOVE = 2;
-  static int HEAL = 3;
-  static int MAGIC_ATTACK = 4;
-  static int CAST_FB = 5;
-  int actionType;
-  Guy attackTarget;
-  List<JTTile> destTiles;
+  public JTTile tile;
+  public JTTile destTile;
+  public JTGame game;
+  public boolean inTransit = false;
+  public float time;
+  public boolean selected;
+  public boolean takingTurn;
+  public JTPlayer controller;
+  public int ap = 0;
+  public int hp = 0;
+  public static int NOTHING = 0;
+  public static int ATTACK = 1;
+  public static int MOVE = 2;
+  public static int HEAL = 3;
+  public static int MAGIC_ATTACK = 4;
+  public static int CAST_FB = 5;
+  public int actionType;
+  public Guy attackTarget;
+  public List<JTTile> destTiles;
   // QoL action queueing
-  List<Object> actionQueue;
+  public List<Object> actionQueue;
 
   public Guy()
   {
@@ -97,7 +98,7 @@ public class Guy
   {
     return false;
   }
-  public void heal(Guy g)
+  public boolean heal(Guy g)
   {
     if (!inTransit && canHeal() && ap > 0 && g.hp < 3 && g.hp > 0)
     {
@@ -109,6 +110,7 @@ public class Guy
         time = 0;
         useAp(2);
         inTransit = true;
+        return true;
       }else
       {
         // we couldn't do a move in the chain, clear the rest
@@ -120,9 +122,10 @@ public class Guy
       {
         actionQueue.add(g);
       }
-    }   
+    }
+    return false;
   }
-  public void attack(Guy g)
+  public boolean attack(Guy g)
   {
     if (ap > 0)
     {
@@ -140,6 +143,7 @@ public class Guy
             time = 0;
             useAp(1);
             inTransit = true;
+            return true;
           }else// if it's in the outer ring, it's a ranged attack
           if (inRing(g.tile, 2) && canRange() && hasAp(2))
           {
@@ -149,6 +153,7 @@ public class Guy
             time = 0;
             useAp(2);
             inTransit = true;
+            return true;
           }
         }
         if (!inTransit)
@@ -166,8 +171,9 @@ public class Guy
         }
       }
     }
+    return false;
   }
-  public void moveTo(JTTile t)
+  public boolean moveTo(JTTile t)
   {
     if (!inTransit)
     {
@@ -178,6 +184,7 @@ public class Guy
         actionType = MOVE;
         time = 0;
         useAp(1);
+        return true;
       }else
       {
         // we couldn't do a move in the chain, clear the rest
@@ -185,11 +192,13 @@ public class Guy
       }
     }else
     {
+      // this should check and return true if possible
       if (ap-actionQueue.size() > 0)
       {
         actionQueue.add(t);
       }
     }
+    return false;
   }
   public void useAp(int num)
   {
