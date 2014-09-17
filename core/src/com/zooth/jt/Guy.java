@@ -34,6 +34,8 @@ public class Guy
   public List<JTTile> destTiles;
   // QoL action queueing
   public List<Object> actionQueue;
+  public int maxAp = 3;
+  public int maxHp = 3;
 
   public Guy()
   {
@@ -100,7 +102,7 @@ public class Guy
   }
   public boolean heal(Guy g)
   {
-    if (!inTransit && canHeal() && ap > 0 && g.hp < 3 && g.hp > 0)
+    if (!inTransit && canHeal() && ap > 0 && g.hp < maxHp && g.hp > 0)
     {
       if ((inRing(g.tile, 1) || inRing(g.tile, 2)) && game.checkIsMovable(g.tile) && hasAp(2))
       {
@@ -212,7 +214,7 @@ public class Guy
   // called when the game starts
   public void reset()
   {
-    hp = 3;
+    hp = maxHp;
     ap = 0;
   }
 
@@ -228,10 +230,10 @@ public class Guy
   {
     // if we have enough hp, give full ap
     if (hp > 1)
-      ap = 3;
+      ap = maxAp;
     else // if we're hurt a lot, give -1 ap
     if (hp > 0)
-      ap = 2;
+      ap = maxAp-1;
     else // we're dead:
       ap = 0;
   }
@@ -429,6 +431,8 @@ public class Guy
     }
     
     sb.setColor(1, 1, 1, 1);
+    if (!takingTurn)
+      sb.setColor(.6f, .6f, .6f, 1);
     drawTex(sb, getTexture(), width, height, 0, 0, pos);
     if (actionType == HEAL && inTransit)
     {
@@ -440,28 +444,41 @@ public class Guy
     {
       // draw the ap
       float added = -.7f;
-      for (int i = -1; i < 2; ++i)
+      for (int i = 0; i < maxAp; ++i)
       {
-        if (i+1 < ap)
+        if (i < ap)
           sb.setColor(1, 1, 1, 1);
         else
           sb.setColor(0, 0, 0, 1);
-        drawTex(sb, JTactics.assets.hex, width*(1f+added), width*(1f+added), height*(1f+added)/2, width*.4f*i, pos);
+        float sub = ((float)(maxAp-1)/2f);// graphical adj based on max ap to center the hexagons
+        drawTex(sb, JTactics.assets.fullHex, width*(1f+added), width*(1f+added), height*(1f+added)/2, width*.4f*(i-sub), pos);
       }
     }
     // draw health bar:
+    float barWidth = game.field.width*.6f;
+    float barHeight = game.field.height*.15f;
     // back of it
     sb.setColor(.4f, 0, 0, 1);
     sb.draw(JTactics.assets.white,
       pos.x+game.field.width*.2f,
       pos.y+game.field.height/2+height+game.field.height*.05f,
-      game.field.width*.6f, game.field.height*.15f);
+      barWidth, barHeight);
     // filled part:
     sb.setColor(1, 0, 0, 1);
     sb.draw(JTactics.assets.white,
       pos.x+game.field.width*.2f,
       pos.y+game.field.height/2+height+game.field.height*.05f,
-      game.field.width*.6f*hp/3f, game.field.height*.15f);
+      barWidth*(float)hp/(float)maxHp, barHeight);
+    // breaks each bar (ticks)
+    float tickW = barWidth*.07f;
+    for (int i = 1; i < maxHp; ++i)
+    {
+      sb.setColor(.4f, 0, 0, 1);
+      sb.draw(JTactics.assets.white,
+        pos.x+game.field.width*.2f+barWidth*((float)(i)/(float)(maxHp))-tickW/2f,
+        pos.y+game.field.height/2+height+game.field.height*.02f,
+        tickW, barHeight*1.4f);
+    }
   }
 
   public void drawTex(SpriteBatch sb, Texture t, float width, float height, float offsetY, float offsetX, Vector2 pos)

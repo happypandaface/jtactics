@@ -26,8 +26,15 @@ public class JTGame
 
   public JTGame()
   {
-    field = new JTField();
+    field = getField();
     objs = new ArrayList<Guy>();
+  }
+  
+  
+  // for sub classed games
+  public JTField getField()
+  {
+    return new JTField();
   }
 
   public void create()
@@ -56,7 +63,7 @@ public class JTGame
     setupObstacles();
     setupObjs();
   }
-    
+  
   public void setupPlayers()
   {
     JTPlayer p = new JTPlayer();

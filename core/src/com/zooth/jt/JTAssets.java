@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.g2d.*;
 public class JTAssets
 {
   public Texture hex;
+  public Texture fullHex;
   public Texture guy;
   public Texture glow;
   public Texture white;
@@ -19,17 +20,31 @@ public class JTAssets
   public Texture mage;
   public Texture whiteMage;
   public Texture openingBG;
+  public Texture darkForest;
+  public Texture frog;
+  public Texture chatBox;
+  public Texture mouseRightClick;
+  public Texture mouseLeftClick;
+  public Texture mouseNoClick;
+  public Texture mouseBothClick;
   public BitmapFont font;
 
   public void create()
   {
-    hex = new Texture("hexTile.png");
+    hex = new Texture("hexTileOutline.png");
+    fullHex = new Texture("hexTile.png");
     guy = new Texture("guy.png");
     glow = new Texture("glow.png");
     mage = new Texture("mage.png");
     fireball = new Texture("fireball.png");
     whiteMage = new Texture("whiteMage.png");
     openingBG = new Texture("openingBG.png");
+    darkForest = new Texture("darkForest.png");
+    frog = new Texture("frog.png");
+    chatBox = new Texture("chatBox.png");
+    mouseRightClick = new Texture("mouseRightClick.png");
+    mouseLeftClick = new Texture("mouseLeftClick.png");
+    mouseNoClick = new Texture("mouseNoClick.png");
     {
       Pixmap p = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
       p.setColor(1, 1, 1, 1);

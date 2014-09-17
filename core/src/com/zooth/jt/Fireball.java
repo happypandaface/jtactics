@@ -25,6 +25,7 @@ public class Fireball
     float width = game.field.height*.5f;
     float height = game.field.height*.5f;
     float offY = game.field.width*.3f;
+    sb.setColor(1, 1, 1, 1);
     for (float dst = 0; dst < 1; dst += 1f/tailLen)
     {
       float size = (.4f+.6f*dst);

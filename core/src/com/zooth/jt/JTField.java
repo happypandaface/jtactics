@@ -40,6 +40,12 @@ public class JTField
   {
     //sRenderer = new ShapeRenderer();
   }
+  
+  // for overriding
+  public void drawBackground(SpriteBatch sb, Camera cam)
+  {
+    
+  }
 
   public void render(SpriteBatch sb, Camera cam)
   {
@@ -48,6 +54,7 @@ public class JTField
     //sRenderer.circle(50, 50, 50, 50);
     //sRenderer.end();
         //Gdx.app.log("gap", ""+width+", "+height+", "+width);
+    drawBackground(sb, cam);
     closestTile = null;
     closestDist = 0;
     for (int x = -2; x < 60; ++x)

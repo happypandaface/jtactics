@@ -1,5 +1,13 @@
 package com.zooth.jt.game;
 
+import com.badlogic.gdx.graphics.glutils.*;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
+import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.*;
 import com.zooth.jt.*;
 
 public class OpeningFight extends JTGame
@@ -8,6 +16,18 @@ public class OpeningFight extends JTGame
   public void setController(OpeningCutscene os)
   {
     this.os = os;
+  }
+  public JTField getField()
+  {
+    return new JTField()
+    { 
+      // for overriding
+      public void drawBackground(SpriteBatch sb, Camera cam)
+      {
+        sb.setColor(1, 1, 1, .5f);
+        sb.draw(JTactics.assets.darkForest, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+      }
+    };
   }
   @Override
   public void setupObjs()
@@ -25,13 +45,13 @@ public class OpeningFight extends JTGame
       addObj(g);
     }
     {
-      Guy g = new WhiteMage();
+      Guy g = new Frog();
       g.setController(players.get(1));
       g.tile = new JTTile(0, 4, 6);
       addObj(g);
     }
     {
-      Guy g = new BlackMage();
+      Guy g = new Frog();
       g.setController(players.get(1));
       g.tile = new JTTile(0, 4, 5);
       addObj(g);

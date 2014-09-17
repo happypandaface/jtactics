@@ -10,31 +10,41 @@ import java.util.*;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.Input.Keys;
 import com.zooth.jt.*;
+import com.zooth.jt.cinematics.*;
 
 public class OpeningCutscene
 {
   SpriteBatch sb;
+  float time;
+  JTGame currGame;
   OpeningFight game;
   OpeningFight2 game2;
-  String[] intro = 
+  public Track lastTrack = null;
+  public Track currTrack = null;
+  public Track introTrack;
+  public Track afterFightTrack;
+  public Track afterFight2Track;
+  public Track finalTrack;
+  
+  public OpeningCutscene()
   {
-    "You have to fight, click to select a character and right click to give them actions!"
-  };
-  int introIdx = 0;
-  String[] afterFight = 
-  {
-    "Good job!",
-    "You won the fight!",
-    "Now, you must fight again!"
-  };
-  int afterFightIdx = -1;
-  String[] afterFight2 = 
-  {
-    "Good job, again!",
-    "You won another fight!",
-    "Go now and rest, YOU'VE earned it!"
-  };
-  int afterFight2Idx = -1;
+    introTrack = new Track();
+    introTrack.events.add(new TrackEvent("You've been surrounded by dire frogs in the forest!"));
+    introTrack.events.add(new TrackEvent("Click to select a character and right click to give them actions."));
+    introTrack.events.add(new TrackEvent("You can select an adjacent hexagon to move there."));
+    introTrack.events.add(new TrackEvent("Or select an enemy to attack it."));
+    introTrack.events.add(new TrackEvent("Each character gets 3 actions per turn, shown below them by white hexagons."));
+    introTrack.events.add(new TrackEvent("You have to fight, click to select a character and right click to give them actions!"));
+    currTrack = introTrack;
+    afterFightTrack = new Track();
+    afterFightTrack.events.add(new TrackEvent("Great job, you beat the first wave!"));
+    afterFightTrack.events.add(new TrackEvent("Oh no! Here comes a second!"));
+    afterFight2Track = new Track();
+    afterFight2Track.events.add(new TrackEvent("Great job, you beat the second wave!"));
+    afterFight2Track.events.add(new TrackEvent("Go now and rest, YOU'VE earned it!"));
+    finalTrack = new Track();
+    finalTrack.events.add(new TrackEvent("To be continued..."));
+  }
   
   public void create()
   {
@@ -48,72 +58,102 @@ public class OpeningCutscene
   }
   public void endedFight()
   {
-    // this starts the after fight dialogue
-    // if we haven't seen it
-    if (afterFightIdx < 0)
-      afterFightIdx = 0;
-    else
-      afterFight2Idx = 0;
+    // after we win a fight,
+    // play the next dialogue
+    // this should lead into the
+    // next fight
+    if (currGame == game)
+    {
+      currGame = null;
+      currTrack = afterFightTrack;
+    }else
+    if (currGame == game2)
+    {
+      currGame = null;
+      currTrack = afterFight2Track;
+    }
   }
   public void lostFight()
   {
     // we lost the fight
-    // figure out which one it was, and 
     // display the previous dialogue again
-    if (afterFightIdx < 0)
+    // doing this should automatically lead into the correct fight
+    // and provide some backstory
+    currTrack = lastTrack;
+    currTrack.reset();
+    currGame.startedGame = false;
+  }
+  public void nextPart()
+  {
+    if (currTrack == introTrack)
     {
-      introIdx = 0;
-      game.startedGame = false;
+      lastTrack = currTrack;
+      currTrack = null;
+      currGame = game;
     }else
+    if (currTrack == afterFightTrack)
     {
-      afterFightIdx = 2;
-      game2.startedGame = false;
+      lastTrack = currTrack;
+      currTrack = null;
+      currGame = game2;
+    }else
+    if (currTrack == afterFight2Track)
+    {
+      lastTrack = currTrack;
+      currTrack = finalTrack;
     }
   }
   public void render()
   {
-    if (introIdx < intro.length)
+    time += Gdx.graphics.getDeltaTime();
+    if (currTrack != null)
     {
       Gdx.gl.glClearColor(1, 1, 1, 1);
       Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
       sb.begin();
+      sb.setColor(1, 1, 1, 1);
       sb.draw(JTactics.assets.openingBG, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-      drawMiddleText(sb, intro[introIdx]);
+      drawCharacterText(sb, JTactics.assets.chatBox, currTrack.events.get(currTrack.currIdx).dialogue);
       sb.end();
       if (Gdx.input.justTouched())
-        introIdx++;
+      {
+        if (currTrack != finalTrack)
+          currTrack.currIdx++;
+        if (currTrack.currIdx >= currTrack.events.size())
+          nextPart();
+      }
     }else
-    if (afterFightIdx >= 0 && afterFightIdx < afterFight.length)
+    if (currGame != null)
     {
-      Gdx.gl.glClearColor(1, 1, 1, 1);
+      if (!currGame.startedGame)
+        currGame.startGame();
+      Gdx.gl.glClearColor(0, 0, 0, 1);
       Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
       sb.begin();
-      drawMiddleText(sb, afterFight[afterFightIdx]);
+      currGame.render(sb);
       sb.end();
-      if (Gdx.input.justTouched())
-        afterFightIdx++;
-    }else
-    if (afterFight2Idx >= 0 && afterFight2Idx < afterFight2.length)
-    {
-      Gdx.gl.glClearColor(1, 1, 1, 1);
-      Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-      sb.begin();
-      drawMiddleText(sb, afterFight2[afterFight2Idx]);
-      sb.end();
-      if (Gdx.input.justTouched() && afterFight2Idx < afterFight2.length-1)
-        afterFight2Idx++;
-    }else
-    if (afterFightIdx < 0)
-    {
-      if (!game.startedGame)
-        game.startGame();
-      game.render();
-    }else
-    {
-      if (!game2.startedGame)
-        game2.startGame();
-      game2.render();
     }
+  }
+  public void drawCharacterText(SpriteBatch sb, Texture tex, String str)
+  {
+    float width = Gdx.graphics.getWidth()*.8f;
+    float textWidth = Gdx.graphics.getWidth()*.6f;
+    float height = Gdx.graphics.getHeight()*.2f;
+    BitmapFont.TextBounds tb = JTactics.assets.font.getWrappedBounds(str, textWidth);
+    float midX = Gdx.graphics.getWidth()/2f;
+    float pad = width*.1f;
+    float midY = height/2f+pad/2f;
+    sb.setColor(.4f, .5f, .9f, .7f);
+    sb.draw(JTactics.assets.chatBox, midX-width/2f-pad/2f, midY-tb.height/2f-pad/2f, width+pad, tb.height+pad);
+    float mouseWidth = width*.15f;
+    float mouseHeight = height;
+    sb.setColor(1, 1, 1, .9f);
+    if (currTrack != finalTrack)
+      sb.draw(
+        ((int)(time*2.5f))%2 == 0?JTactics.assets.mouseNoClick:JTactics.assets.mouseLeftClick,
+        midX+width/2f-pad-mouseWidth/2f, midY-mouseHeight/2f, mouseWidth, mouseHeight);
+    JTactics.assets.font.setColor(1f, 1f, 1, .9f);
+    JTactics.assets.font.drawWrapped(sb, str, midX-(width-textWidth)/2f-tb.width/2f, midY+tb.height/2f, tb.width, BitmapFont.HAlignment.CENTER);
   }
   public void drawMiddleText(SpriteBatch sb, String str)
   {
