@@ -132,13 +132,44 @@ public class JTTile
       }else
       if (dir == Direction.E)
       {
-        curr.x++;
-        curr.y--;
+        // east and west are special
+        ++i;// adding extra spaces
+        {
+          curr.x++;
+          JTTile t = fromTiltedCoords(curr);
+          tiles.add(t);
+        }
+        {
+          curr.x--;
+          curr.y--;
+          JTTile t = fromTiltedCoords(curr);
+          tiles.add(t);
+        }
+        // this has to be the last one (so we know where it ends)
+        {
+          curr.x++;
+          // we add this last one at the end of the if statement
+        }
       }else
       if (dir == Direction.W)
       {
-        curr.x--;
-        curr.y++;
+        // read the above if statement for more clarification here
+        ++i;
+        {
+          curr.x--;
+          JTTile t = fromTiltedCoords(curr);
+          tiles.add(t);
+        }
+        {
+          curr.y++;
+          curr.x++;
+          JTTile t = fromTiltedCoords(curr);
+          tiles.add(t);
+        }
+        {
+          curr.x--;
+          // we add this last one at the end of the if statement
+        }
       }else
       if (dir == Direction.NE)
       {

@@ -10,6 +10,7 @@ import java.util.*;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.Input.Keys;
 import com.zooth.jt.game.*;
+import com.zooth.jt.guys.*;
 
 public class JTGame
 {
@@ -21,12 +22,15 @@ public class JTGame
   public List<JTPlayer> players;
   public JTPlayer currPlayer = null;
   public List<JTTile> obstacles;
+  public List<JTTile> inPlay;// the tiles that are in play and drawn
   public boolean startedGame;
   public int winner = -1;
+  public int turnsTaken = 0;
 
   public JTGame()
   {
     field = getField();
+    field.setGame(this);
     objs = new ArrayList<Guy>();
   }
   
@@ -54,13 +58,16 @@ public class JTGame
     selectedGuy = null;
     players = new ArrayList<JTPlayer>();
     obstacles = new ArrayList<JTTile>();
+    inPlay = new ArrayList<JTTile>();
     objs = new ArrayList<Guy>();
     // this will make the loop get the first player
     currPlayer = null;
+    turnsTaken = 0;
     
     // custom commands
     setupPlayers();
     setupObstacles();
+    setupInPlay();
     setupObjs();
   }
   
@@ -73,8 +80,23 @@ public class JTGame
     pc.type = JTPlayer.COMPUTER;
     addPlayer(pc);
   }
+  public void setupInPlay()
+  {
+    int fieldW = 8;
+    int xTopOff = 1;
+    int xBotOff = 0;
+    int fieldH = 10;
+    int yTopOff = 0;
+    int yBotOff = 0;
+    for (int x = 0; x < fieldW; ++x)
+      for (int y = 0; y < fieldH; ++y)
+        for (int off = 0; off < 2; ++off)
+          if (x+(xBotOff==1?off:0) > 0 && x+(xTopOff==1?off:0) < fieldW-1 && y+(yBotOff==1?off:0) > 0 && y+(yTopOff==1?off:0) < fieldH-1)
+            inPlay.add(new JTTile(off, x, y));
+  }
   public void setupObstacles()
   {
+    /* we now use inPlay to make boundaries because it looks nicer with backgrounds
     int fieldW = 8;
     int xTopOff = 1;
     int xBotOff = 0;
@@ -86,6 +108,7 @@ public class JTGame
         for (int off = 0; off < 2; ++off)
           if (x+(xBotOff==1?off:0) == 0 || x+(xTopOff==1?off:0) == fieldW-1 || y+(yBotOff==1?off:0) == 0 || y+(yTopOff==1?off:0) == fieldH-1)
             obstacles.add(new JTTile(off, x, y));
+    */
   }
   public void setupObjs()
   {
@@ -116,6 +139,7 @@ public class JTGame
   }
   public void  addPlayer(JTPlayer p)
   {
+    p.setGame(this);
     players.add(p);
   }
   public void addObj(Guy g)
@@ -181,7 +205,12 @@ public class JTGame
       if (obstacles.get(i).check(t))
         return false;
     }
-    return true; 
+    for (int i = 0; i < inPlay.size(); ++i)
+    {
+      if (inPlay.get(i).check(t))
+        return true;
+    }
+    return false;
   }
   // this function makes an object try to 'target' a tile
   // this could mean healing the unit there, or 
@@ -270,6 +299,8 @@ public class JTGame
           // this guy's turn is over, switch players
           int idx = players.indexOf(currPlayer);
           switchPlayer(players.get((idx+1)%players.size()));
+          // increment turns taken for events, tutorials and cutscenes
+          ++turnsTaken;
         }
       }
       if (Gdx.input.justTouched())
@@ -336,80 +367,8 @@ public class JTGame
       }
       if (currPlayer.type == JTPlayer.COMPUTER)
       {// it's a computer, do AI
-        for (int i = 0; i < currPlayersObjs.size(); ++i)
-        {
-          Guy obj = currPlayersObjs.get(i);
-          if (obj.inTransit || obj.movesLeft() > 0)
-          {// it's important to check inTransit
-            // because even if we don't do an action,
-            // we may break at the end (character by character
-            // commands)
-            if (!obj.inTransit)
-            {// don't assign moves to characters in an action
-              // this prevents computers from queueing
-
-              // first check outer ring targets
-              List<JTTile> outerTiles = obj.getAdjTiles(2);
-              for (int c = 0; c < outerTiles.size(); ++c)
-              {
-                JTTile t = outerTiles.get(c);
-                Guy g = guyAt(t);
-                if (g != null && !g.isDead())
-                {
-                  if (!obj.inTransit)
-                    target(obj, t);
-                }
-              }
-
-              // then check inner ring targets
-              if (!obj.inTransit)
-              {
-                List<JTTile> innerTiles = obj.getAdjTiles(1);
-                for (int c = 0; c < innerTiles.size(); ++c)
-                {
-                  JTTile t = innerTiles.get(c);
-                  Guy g = guyAt(t);
-                  if (g != null && !g.isDead())
-                  {
-                    if (!obj.inTransit)
-                      target(obj, t);
-                  }
-                }
-              }
-              if (!obj.inTransit)
-              {// check again, computers REALLY can't handle queueing
-                // if we got to this point we don't have any
-                // other good targets, we should position
-                // so we can fight later (this algorithm will
-                // become more complicated, but now we just walk
-                // towards enemies)
-                List<JTTile> path = null;
-                for (int c = 0; c < objs.size(); ++c)
-                {
-                  Guy currObj = objs.get(c);
-                  if (currObj.controller != obj.controller && !currObj.isDead())
-                  {
-                    List<JTTile> currPath = currObj.tile.getPath(obj.tile, this);
-                    if (path == null || currPath.size() < path.size())
-                      path = currPath;
-                  }
-                }
-                // because the first node in the path, is the
-                // tile we're currently on, we use the second
-                // on
-                JTTile tarTile = path.get(1);
-                target(obj, tarTile);
-                /* random directions:
-                List<JTTile> innerTiles = obj.getAdjTiles(1);
-                
-                JTTile t = innerTiles.get((int)(Math.floor(Math.random()*innerTiles.size())));
-                target(obj, t);
-                */
-              }
-            }
-            //break; // with this break in, the computer does moves one at a time
-          }
-        }
+        currPlayer.doAi(objs);
+        
       }
       for (int i = 0; i < objs.size(); ++i)
       {
@@ -435,8 +394,11 @@ public class JTGame
         for (int i = 0; i < actionTiles.size(); ++i)
         {
           JTTile tile = actionTiles.get(i);
-          Vector2 pos = field.getPos(tile);
-          sb.draw(JTactics.assets.hex, pos.x, pos.y, field.width, field.height);
+          if (checkIsMovable(tile))
+          {
+            Vector2 pos = field.getPos(tile);
+            sb.draw(JTactics.assets.hex, pos.x, pos.y, field.width, field.height);
+          }
         }
       actionTiles = selectedGuy.getAdjTiles(2);
       sb.setColor(0, 1f, 0f, .4f);
@@ -444,8 +406,11 @@ public class JTGame
         for (int i = 0; i < actionTiles.size(); ++i)
         {
           JTTile tile = actionTiles.get(i);
-          Vector2 pos = field.getPos(tile);
-          sb.draw(JTactics.assets.hex, pos.x, pos.y, field.width, field.height);
+          if (checkIsMovable(tile))
+          {
+            Vector2 pos = field.getPos(tile);
+            sb.draw(JTactics.assets.hex, pos.x, pos.y, field.width, field.height);
+          }
         }
 
     }

@@ -15,8 +15,8 @@ public class JTField
   float hexSizeRatio = 400f/640f;
 
   float gap = 9;
-  float width = 60;
-  float height = width*hexSizeRatio;
+  public float width = 60;
+  public float height = width*hexSizeRatio;
   float heightGap = height+gap;
   float xGap = (width/640)*200;
   float widthGap = width+xGap+gap/2;
@@ -26,9 +26,16 @@ public class JTField
   float closestDist = 0;
   JTTile closestTile = null;
   JTTile selectedTile = null;
+  
+  JTGame game;
 
   public JTField()
   {
+  }
+  
+  public void setGame(JTGame g)
+  {
+    game = g;
   }
 
   public void setRatio(float r)
@@ -59,18 +66,22 @@ public class JTField
     closestDist = 0;
     for (int x = -2; x < 60; ++x)
       for (int y = -2; y < 60; ++y)
-        checkPos(0, x, y);
+        if (game.checkIsMovable(new JTTile(0, x, y)))
+          checkPos(0, x, y);
     for (int x = -2; x < 60; ++x)
       for (int y = -2; y < 60; ++y)
-        checkPos(1, x, y);
+        if (game.checkIsMovable(new JTTile(1, x, y)))
+          checkPos(1, x, y);
     if (Gdx.input.isTouched())
       selectedTile = closestTile;
     for (int x = -2; x < 60; ++x)
       for (int y = -2; y < 60; ++y)
-        drawHex(sb, 0, x, y);
+        if (game.checkIsMovable(new JTTile(0, x, y)))
+          drawHex(sb, 0, x, y);
     for (int x = -2; x < 60; ++x)
       for (int y = -2; y < 60; ++y)
-        drawHex(sb, 1, x, y);
+        if (game.checkIsMovable(new JTTile(1, x, y)))
+          drawHex(sb, 1, x, y);
   }
 
   public Vector2 getMousePos()

@@ -1,4 +1,6 @@
-package com.zooth.jt;
+package com.zooth.jt.guys;
+
+import com.zooth.jt.*;
 
 import com.badlogic.gdx.graphics.glutils.*;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
@@ -10,16 +12,21 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.*;
 import java.util.*;
 
-public class BlackMage extends Guy
+public class FrogMage extends BlackMage
 {
+  public FrogMage()
+  {
+    super();
+    maxHp = 2;
+  }
+  @Override
+  public float characterHeight()
+  {
+    return 1.2f;
+  }
   @Override
   public Texture getTexture()
   {
-    return JTactics.assets.mage;
-  }
-  @Override
-  public boolean canRange()
-  {
-    return true;
+    return JTactics.assets.frogMage;
   }
 }

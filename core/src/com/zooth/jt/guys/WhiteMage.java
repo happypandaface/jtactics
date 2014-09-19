@@ -1,4 +1,6 @@
-package com.zooth.jt;
+package com.zooth.jt.guys;
+
+import com.zooth.jt.*;
 
 import com.badlogic.gdx.graphics.glutils.*;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;

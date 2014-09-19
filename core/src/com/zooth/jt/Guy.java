@@ -29,7 +29,9 @@ public class Guy
   public static int HEAL = 3;
   public static int MAGIC_ATTACK = 4;
   public static int CAST_FB = 5;
+  public static int DOING_ACTION = 6;
   public int actionType;
+  public Action action;
   public Guy attackTarget;
   public List<JTTile> destTiles;
   // QoL action queueing
@@ -289,6 +291,10 @@ public class Guy
           inTransit = false;
           destTile = null;
         }else
+        if (actionType == DOING_ACTION)
+        {
+          action.end();
+        }else
         if (actionType == CAST_FB)
         {
           inTransit = false;
@@ -327,6 +333,10 @@ public class Guy
     }
   }
 
+  public float characterHeight()
+  {
+    return 1;
+  }
   public Texture getTexture()
   {
     return JTactics.assets.mage;
@@ -337,6 +347,10 @@ public class Guy
     if (!inTransit && hp > 0 && (inRing(t, 1) || inRing(t, 2)) && hasAp(1))
     {
       //destTile = t;
+      action = new Action();
+      action.dirTile = t;
+      action.startAction(this);
+      /* old code
       actionType = CAST_FB;
       time = 0;
       useAp(1);
@@ -344,6 +358,7 @@ public class Guy
       int dir = tile.getDirection(t);
       List<JTTile> tilesInDir = tile.direction(dir, 2);
       destTile = tilesInDir.get(tilesInDir.size()-1);
+      */
     }
   }
   
@@ -418,6 +433,10 @@ public class Guy
         fb.pos = dst.cpy().sub(src).scl(time<delay?0:(float)Math.sin((time-delay)/(1-delay)*Math.PI/2f)).add(src);
         fb.tail = dst.cpy().sub(src).scl(time<delay||time>(1-delay)?(delay)*(float)Math.sin(time*Math.PI):(delay)*(float)Math.sin((delay)*Math.PI));
         game.addProj(fb);
+      }else
+      if (actionType == DOING_ACTION)
+      {
+        pos = action.step(time);
       }
     }else
       pos = game.field.getPos(tile);
@@ -433,7 +452,7 @@ public class Guy
     sb.setColor(1, 1, 1, 1);
     if (!takingTurn)
       sb.setColor(.6f, .6f, .6f, 1);
-    drawTex(sb, getTexture(), width, height, 0, 0, pos);
+    drawTex(sb, getTexture(), width, height*characterHeight(), 0, 0, pos);
     if (actionType == HEAL && inTransit)
     {
       sb.setColor(1, 1, 1, 1);

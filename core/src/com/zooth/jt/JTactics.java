@@ -23,11 +23,12 @@ public class JTactics extends ApplicationAdapter {
 
   @Override
   public void create () {
+    // assets has GOT to be first
+    assets.create();
     batch = new SpriteBatch();
     img = new Texture("badlogic.jpg");
     game.create();
     oc.create();
-    assets.create();
     game.startGame();
   }
 

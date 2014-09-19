@@ -22,11 +22,17 @@ public class JTAssets
   public Texture openingBG;
   public Texture darkForest;
   public Texture frog;
+  public Texture frogMage;
   public Texture chatBox;
   public Texture mouseRightClick;
   public Texture mouseLeftClick;
   public Texture mouseNoClick;
   public Texture mouseBothClick;
+  public Texture temple;
+  public Texture headPriest;
+  public Texture pinkRoom;
+  public Texture forestRoad;
+  public Texture thief;
   public BitmapFont font;
 
   public void create()
@@ -40,11 +46,17 @@ public class JTAssets
     whiteMage = new Texture("whiteMage.png");
     openingBG = new Texture("openingBG.png");
     darkForest = new Texture("darkForest.png");
+    headPriest = new Texture("headPriest.png");
     frog = new Texture("frog.png");
+    frogMage = new Texture("frogMage.png");
     chatBox = new Texture("chatBox.png");
     mouseRightClick = new Texture("mouseRightClick.png");
     mouseLeftClick = new Texture("mouseLeftClick.png");
     mouseNoClick = new Texture("mouseNoClick.png");
+    pinkRoom = new Texture("buttonDownSmall.png");
+    forestRoad = new Texture("forestRoad.png");
+    thief = new Texture("pharaoh.png");
+    temple = new Texture("temple.png");
     {
       Pixmap p = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
       p.setColor(1, 1, 1, 1);
