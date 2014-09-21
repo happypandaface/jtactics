@@ -23,6 +23,7 @@ public class Guy
   public JTPlayer controller;
   public int ap = 0;
   public int hp = 0;
+  public int armor= 0;
   public static int NOTHING = 0;
   public static int ATTACK = 1;
   public static int MOVE = 2;
@@ -31,16 +32,21 @@ public class Guy
   public static int CAST_FB = 5;
   public static int DOING_ACTION = 6;
   public int actionType;
-  public Action action;
   public Guy attackTarget;
   public List<JTTile> destTiles;
   // QoL action queueing
   public List<Object> actionQueue;
   public int maxAp = 3;
   public int maxHp = 3;
+  // the actions this guy can take
+  public List<Integer> possibleActions;
+  // boolean to catch a tile select for actions
+  public boolean pickingLocation = false;
+  public Action currAction = null;
 
   public Guy()
   {
+    possibleActions = new ArrayList<Integer>();
     actionQueue = new ArrayList<Object>();
     tile = new JTTile(0, 0, 0);
   }
@@ -181,7 +187,8 @@ public class Guy
   {
     if (!inTransit)
     {
-      if (!t.check(tile) && canMove(t) && game.checkIsMovable(t) && game.guyAt(t) == null)
+      Guy guyAt = game.guyAt(t);
+      if (!t.check(tile) && canMove(t) && game.checkIsMovable(t) && (guyAt == null || guyAt.isDead()))
       {
         destTile = t;
         inTransit = true;
@@ -208,10 +215,30 @@ public class Guy
   {
     ap-=num;
   }
-  // this is also currently used with negative numbers to heal
+  public void healed(Guy g, int amnt)
+  {
+    if (maxHp-hp > amnt)
+      hp += amnt;
+    else
+      hp = maxHp;
+  }
   public void getDamaged(Guy g, int amnt)
   {
-    hp -= amnt;
+    // deal damage to our armor first
+    armor -= amnt;
+    // check if the damage got through our armor
+    if (armor < 0)
+    {
+      // deal damage that got through armor
+      hp += armor;
+      // make sure we dont have negative armor
+      armor = 0;
+    }
+  }
+  // used by ActShield to give armor
+  public void getArmor(Guy g, int amnt)
+  {
+    armor += amnt;
   }
   // called when the game starts
   public void reset()
@@ -240,11 +267,36 @@ public class Guy
       ap = 0;
   }
 
-  public void setController(JTPlayer p)
+  // allows easy addition (linking)
+  public Guy setController(JTPlayer p)
   {
     controller = p;
+    return this;
+  }
+  public Guy setTile(int off, int x, int y)
+  {
+    tile = new JTTile(off, x, y);
+    return this;
   }
 
+  public void removeAction(int act)
+  {
+    for (int i = 0; i < possibleActions.size(); ++i)
+      if (possibleActions.get(i) == act)
+      {
+        possibleActions.remove(i);
+        break;
+      }
+  }
+  public boolean checkCanPerform(int act)
+  {
+    for (int i = 0; i < possibleActions.size(); ++i)
+    {
+      if (possibleActions.get(i) == act)
+        return true;
+    }
+    return false;
+  }
   public boolean checkSelect(JTTile t)
   {
     return checkAt(t);
@@ -293,7 +345,7 @@ public class Guy
         }else
         if (actionType == DOING_ACTION)
         {
-          action.end();
+          currAction.end();
         }else
         if (actionType == CAST_FB)
         {
@@ -310,7 +362,7 @@ public class Guy
         {
           inTransit = false;
           destTile = null;
-          attackTarget.getDamaged(this, -1);
+          attackTarget.healed(this, 2);
         }
         // if there's more in the queue, do the next one
         if (actionQueue.size() > 0)
@@ -341,15 +393,32 @@ public class Guy
   {
     return JTactics.assets.mage;
   }
+
+  // called by the action and 
+  // sets us up for doing an action
+  public void setupAction()
+  {
+    inTransit = true;
+    time = 0;
+    actionType = DOING_ACTION;
+    destTile = tile.copy();
+    pickingLocation = false;
+  }
+  // called by the action when
+  // we stop doing an action
+  public void shutdownAction()
+  {
+    inTransit = false;
+    destTile = null;
+  }
   
   public void castFireBall(JTTile t)
   {
-    if (!inTransit && hp > 0 && (inRing(t, 1) || inRing(t, 2)) && hasAp(1))
+    if (!inTransit && hp > 0 && (inRing(t, 1) || inRing(t, 2)))
     {
       //destTile = t;
-      action = new Action();
-      action.dirTile = t;
-      action.startAction(this);
+      currAction.dirTile = t;
+      currAction.startAction(this);
       /* old code
       actionType = CAST_FB;
       time = 0;
@@ -362,22 +431,41 @@ public class Guy
     }
   }
   
-  boolean pickingLocation = false;
+  // if this returns true it means a button was pressed
+  // and we shouldn't count the click as a field tile select
+  // (unless the current action says we should)
   public boolean checkGUIClick(Vector2 click)
   {
+    // make sure we can't click this while we're
+    // already doing an action
+    // because it changes the currAction
+    // and can cause NullPointer and weird behaviour
+    if (inTransit)
+      return false;
     // see if we're pressing a button
     float width = 50;
     float height = 50;
-    if (click.x > Gdx.graphics.getWidth()-width && click.y < height)
+    for (int i = 0; i < possibleActions.size(); ++i)
     {
-      pickingLocation = !pickingLocation;
-      return true;
+      int act = possibleActions.get(i);
+      if (click.x < width*(i+1) && click.y < height)
+      {
+        currAction = Action.make(act);
+        if (currAction.canCast(this))
+        {
+          currAction.guy = this;
+          currAction.selected(this);
+        }else
+        {
+          currAction = null;
+        }
+        return true;
+      }
     }
     // we're selecting a location for a button we already pressed
     if (pickingLocation)
     {
       castFireBall(game.field.selectedTile);
-      pickingLocation = false;
       return true;
     }
     return false;
@@ -386,16 +474,22 @@ public class Guy
   {
     float width = 50;
     float height = 50;
-    if (pickingLocation)
-      sb.setColor(1, 1, 1, 1);
-    else
-      sb.setColor(.5f, .5f, .5f, 1);
-    sb.draw(JTactics.assets.fireball, Gdx.graphics.getWidth()-width, 0, width, height);
+    for (int i = 0; i < possibleActions.size(); ++i)
+    {
+      int act = possibleActions.get(i);
+      if (pickingLocation)
+        sb.setColor(1, 1, 1, 1);
+      else
+        sb.setColor(.5f, .5f, .5f, 1);
+      sb.draw(Action.getTex(act), width*i, 0, width, height);
+    }
   }
 
   public void draw(SpriteBatch sb, Camera cam)
   {
     Vector2 pos = null;
+    // if we're doing an action,
+    // get our position from that
     if (inTransit && destTile != null)
     {
       Vector2 src = game.field.getPos(tile);
@@ -436,9 +530,9 @@ public class Guy
       }else
       if (actionType == DOING_ACTION)
       {
-        pos = action.step(time);
+        pos = currAction.step(time);
       }
-    }else
+    }else// if we're not doing an action, just get the position of the tile
       pos = game.field.getPos(tile);
     float width = game.field.height*.7f;
     float height = game.field.width*.6f;
@@ -450,8 +544,10 @@ public class Guy
     }
     
     sb.setColor(1, 1, 1, 1);
-    if (!takingTurn)
+    if (!takingTurn || !hasAp(1))
       sb.setColor(.6f, .6f, .6f, 1);
+    if (isDead())
+      sb.setColor(0, 0, 0, 1);
     drawTex(sb, getTexture(), width, height*characterHeight(), 0, 0, pos);
     if (actionType == HEAL && inTransit)
     {
@@ -459,7 +555,7 @@ public class Guy
       float size = (float)(Math.sin(time*Math.PI)*1.5f+1f);
       drawTex(sb, JTactics.assets.glow, width*size, height*size, 0, 0, pos);
     }
-    if (takingTurn)
+    if (takingTurn && !isDead())
     {
       // draw the ap
       float added = -.7f;
@@ -473,30 +569,47 @@ public class Guy
         drawTex(sb, JTactics.assets.fullHex, width*(1f+added), width*(1f+added), height*(1f+added)/2, width*.4f*(i-sub), pos);
       }
     }
-    // draw health bar:
-    float barWidth = game.field.width*.6f;
-    float barHeight = game.field.height*.15f;
-    // back of it
-    sb.setColor(.4f, 0, 0, 1);
-    sb.draw(JTactics.assets.white,
-      pos.x+game.field.width*.2f,
-      pos.y+game.field.height/2+height+game.field.height*.05f,
-      barWidth, barHeight);
-    // filled part:
-    sb.setColor(1, 0, 0, 1);
-    sb.draw(JTactics.assets.white,
-      pos.x+game.field.width*.2f,
-      pos.y+game.field.height/2+height+game.field.height*.05f,
-      barWidth*(float)hp/(float)maxHp, barHeight);
-    // breaks each bar (ticks)
-    float tickW = barWidth*.07f;
-    for (int i = 1; i < maxHp; ++i)
+    if (!isDead())
     {
+      // draw health bar:
+      float barWidth = game.field.width*.6f;
+      float barHeight = game.field.height*.15f;
+      // offset of the health bar (used when there's armor so
+      // we don't draw over characters behind this one)
+      float barOffY = armor==0?0:-game.field.height*.2f;
+      // back of it
       sb.setColor(.4f, 0, 0, 1);
       sb.draw(JTactics.assets.white,
-        pos.x+game.field.width*.2f+barWidth*((float)(i)/(float)(maxHp))-tickW/2f,
-        pos.y+game.field.height/2+height+game.field.height*.02f,
-        tickW, barHeight*1.4f);
+        pos.x+game.field.width*.2f,
+        pos.y+game.field.height/2+height+game.field.height*.05f+barOffY,
+        barWidth, barHeight);
+      // filled part:
+      sb.setColor(1, 0, 0, 1);
+      sb.draw(JTactics.assets.white,
+        pos.x+game.field.width*.2f,
+        pos.y+game.field.height/2+height+game.field.height*.05f+barOffY,
+        barWidth*(float)(hp>0?hp:0)/(float)maxHp, barHeight);
+      // breaks each bar (ticks)
+      float tickW = barWidth*.07f;
+      for (int i = 1; i < maxHp; ++i)
+      {
+        sb.setColor(.4f, 0, 0, 1);
+        sb.draw(JTactics.assets.white,
+          pos.x+game.field.width*.2f+barWidth*((float)(i)/(float)(maxHp))-tickW/2f,
+          pos.y+game.field.height/2+height+game.field.height*.02f+barOffY,
+          tickW, barHeight*1.4f);
+      }
+      float armorW = barWidth*.3f;
+      float armorH = barWidth*.3f;
+      // draw armor if we have any
+      for (int i = 0; i < armor; ++i)
+      {
+        sb.setColor(1f, 1, 1, 1);
+        sb.draw(JTactics.assets.shield,
+          pos.x+game.field.width*.2f+barWidth*((float)(i+1)/(float)(armor+1))-armorW/2f,
+          pos.y+game.field.height/2+height+game.field.height*.02f,
+          armorW, armorH);
+      }
     }
   }
 

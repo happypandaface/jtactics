@@ -12,10 +12,10 @@ import java.util.*;
 
 public class Fireball
 {
-  Vector2 pos;
-  Vector2 tail;
-  JTGame game;
-  float tailLen = 5;
+  public Vector2 pos;
+  public Vector2 tail;
+  public JTGame game;
+  public float tailLen = 5;
   public void setGame(JTGame g)
   {
     game = g;

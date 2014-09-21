@@ -19,6 +19,13 @@ public class ExtendableFight extends JTGame
     public void endedFight();
     public void lostFight();
   }
+  @Override
+  public void setupInPlay()
+  {
+    addHex(0, 2, 5, 1);
+    addHex(0, 3, 5, 1);
+    addHex(0, 4, 5, 1);
+  }
   FightListener fl;
   public ExtendableFight setFightListener(FightListener arg)
   {

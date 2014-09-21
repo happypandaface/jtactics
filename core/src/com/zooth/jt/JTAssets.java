@@ -19,6 +19,7 @@ public class JTAssets
   public Texture fireball;
   public Texture mage;
   public Texture whiteMage;
+  public Texture blueMage;
   public Texture openingBG;
   public Texture darkForest;
   public Texture frog;
@@ -33,6 +34,16 @@ public class JTAssets
   public Texture pinkRoom;
   public Texture forestRoad;
   public Texture thief;
+  public Texture swampBG;
+  public Texture swampTemple;
+  public Texture swampFight;
+  public Texture frogKnight;
+  public Texture shield;
+  public Texture shieldR;
+  public Texture shieldL;
+  public Texture forestCave;
+  public Texture scaryEyes;
+  public Texture caveFloor;
   public BitmapFont font;
 
   public void create()
@@ -44,6 +55,7 @@ public class JTAssets
     mage = new Texture("mage.png");
     fireball = new Texture("fireball.png");
     whiteMage = new Texture("whiteMage.png");
+    blueMage = new Texture("blueMage.png");
     openingBG = new Texture("openingBG.png");
     darkForest = new Texture("darkForest.png");
     headPriest = new Texture("headPriest.png");
@@ -57,6 +69,17 @@ public class JTAssets
     forestRoad = new Texture("forestRoad.png");
     thief = new Texture("pharaoh.png");
     temple = new Texture("temple.png");
+    swampBG = new Texture("swampy.jpeg");
+    swampFight = new Texture("swampBattle.png");
+    frogKnight = new Texture("frogKnight.png");
+    shield = new Texture("shield.png");
+    shieldR = new Texture("shieldRight.png");
+    shieldL = new Texture("shieldLeft.png");
+    forestCave = new Texture("forestCave.png");
+    swampTemple= new Texture("swampTemple.jpg");
+    scaryEyes= new Texture("scaryEyes.png");
+    caveFloor= new Texture("caveFloor.png");
+
     {
       Pixmap p = new Pixmap(1, 1, Pixmap.Format.RGBA8888);
       p.setColor(1, 1, 1, 1);

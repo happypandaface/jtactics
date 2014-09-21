@@ -19,6 +19,13 @@ public class OpeningFight extends JTGame
   {
     this.os = os;
   }
+  @Override
+  public void setupInPlay()
+  {
+    addHex(0, 2, 5, 1);
+    addHex(0, 3, 5, 1);
+    addHex(0, 4, 5, 1);
+  }
   public JTField getField()
   {
     return new JTField()
@@ -42,7 +49,7 @@ public class OpeningFight extends JTGame
     {
       Guy g = new WhiteMage();
       g.setController(players.get(0));
-      g.tile = new JTTile(0, 1, 5);
+      g.tile = new JTTile(1, 1, 4);
       addObj(g);
     }
     {

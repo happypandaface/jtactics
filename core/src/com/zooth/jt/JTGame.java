@@ -94,6 +94,38 @@ public class JTGame
           if (x+(xBotOff==1?off:0) > 0 && x+(xTopOff==1?off:0) < fieldW-1 && y+(yBotOff==1?off:0) > 0 && y+(yTopOff==1?off:0) < fieldH-1)
             inPlay.add(new JTTile(off, x, y));
   }
+  // add a hex located at (off, x, y) with a size of (ring)
+  // a ring of (0) will give one tile
+  // the hex is added to inPlay tiles and will be drawn
+  // an moveable
+  public void addHex(int off, int x, int y, int ring)
+  {
+    // make the mid tile
+    JTTile midTile = new JTTile(off, x, y);
+    // make an array for all the nearby tiles
+    List<JTTile> tiles = new ArrayList<JTTile>();
+    // add the middle of the hex
+    tiles.add(midTile);
+    // iterate through the num of rings around the middle
+    // wanted and add all to tiles
+    for (int i = 1; i <= ring; ++i)
+      tiles.addAll(midTile.getAdjTiles(i));
+    // now check if each one has already been added
+    for (int i = 0; i < tiles.size(); ++i)
+    {
+      JTTile tile = tiles.get(i);
+      boolean alreadyInPlay = false;
+      for (int c = 0; c < inPlay.size(); ++c)
+      {
+        if (inPlay.get(c).check(tiles.get(i)))
+        {
+          alreadyInPlay = true;
+        }
+      }
+      if (!alreadyInPlay)
+        inPlay.add(tile);
+    }
+  }
   public void setupObstacles()
   {
     /* we now use inPlay to make boundaries because it looks nicer with backgrounds
@@ -148,7 +180,20 @@ public class JTGame
     g.reset();
     objs.add(g);
   }
-
+  
+  public List<Guy> getObjs(JTPlayer p)
+  {
+    List<Guy> guys = new ArrayList<Guy>();
+    for (int i = 0; i < objs.size(); ++i)
+    {
+      Guy obj = objs.get(i);
+      if (obj.controller == p)
+      {
+        guys.add(obj);
+      }
+    }
+    return guys;
+  }
   public void switchPlayer(JTPlayer p)
   {
     // tell all the other players that it's not their turn
@@ -188,12 +233,14 @@ public class JTGame
   }
 
   // returns the first guy at the tile
+  // who isn't dead
   public Guy guyAt(JTTile t)
   {
     for (int i = 0; i < objs.size(); ++i)
     {
-      if (objs.get(i).checkAt(t))
-        return objs.get(i);
+      Guy obj = objs.get(i);
+      if (!obj.isDead() && obj.checkAt(t))
+        return obj;
     }
     return null; 
   }
@@ -224,17 +271,20 @@ public class JTGame
       Guy obj = objs.get(i);
       if (obj.tile.check(t))
       {
-        stillAMove = false;
-        if (obj.controller != guy.controller)
+        if (!obj.isDead())
         {
-          // try an attack
-          guy.attack(obj);
-        }else
-        {
-          // it's a friendly, try a heal
-          guy.heal(obj);
+          stillAMove = false;
+          if (obj.controller != guy.controller)
+          {
+            // try an attack
+            guy.attack(obj);
+          }else
+          {
+            // it's a friendly, try a heal
+            guy.heal(obj);
+          }
+          break;
         }
-        break;
       }
     }
     if (stillAMove)
@@ -257,12 +307,17 @@ public class JTGame
     render(sb);
     sb.end();
   }
+  public boolean checkPause()
+  {
+    return false;
+  }
   public void render(SpriteBatch sb)
   {
     field.render(sb, null);
-    // check if the game was won:
-    // this should check teams eventually
+    // check state (for extending)
+    boolean paused = checkPause();
     boolean gameOver = false;
+    // get the players left
     List<JTPlayer> playersLeft = new ArrayList<JTPlayer>();
     for (int i = 0; i < players.size(); ++i)
     {
@@ -282,9 +337,14 @@ public class JTGame
         playersLeft.add(p);
       }
     }
-    if (playersLeft.size() < 2)// not enough players to continue
-      gameOver = true;
-    if (!gameOver)
+    if (!paused)
+    {
+      // check if the game was won:
+      // this should check teams eventually
+      if (playersLeft.size() < 2)// not enough players to continue
+        gameOver = true;
+    }
+    if (!gameOver && !paused)
     {
       float dt = Gdx.graphics.getDeltaTime();
       // if we haven't gotten a player (start of game)
@@ -317,19 +377,22 @@ public class JTGame
               for (int i = 0; i < objs.size(); ++i)
               {
                 Guy obj = objs.get(i);
-                if (obj.tile.check(field.selectedTile))
+                if (!obj.isDead())
                 {
-                  stillAMove = false;
-                  if (obj.controller != selectedGuy.controller)
+                  if (obj.tile.check(field.selectedTile))
                   {
-                    // try an attack
-                    usedMove = selectedGuy.attack(obj);
-                  }else
-                  {
-                    // it's a friendly, try a heal
-                    usedMove = selectedGuy.heal(obj);
+                    stillAMove = false;
+                    if (obj.controller != selectedGuy.controller)
+                    {
+                      // try an attack
+                      usedMove = selectedGuy.attack(obj);
+                    }else
+                    {
+                      // it's a friendly, try a heal
+                      usedMove = selectedGuy.heal(obj);
+                    }
+                    break;
                   }
-                  break;
                 }
               }
               // if it wasn't a heal or an attack, it may be a move:
@@ -353,7 +416,7 @@ public class JTGame
               for (int i = 0; i < objs.size(); ++i)
               {
                 Guy obj = objs.get(i);
-                if (obj.checkSelect(field.selectedTile))
+                if (!obj.isDead() && obj.checkSelect(field.selectedTile))
                 {
                   selectedGuy = obj;
                   // tell the new guy he was selected
@@ -419,7 +482,7 @@ public class JTGame
     // now for drawing objects:
     // order for draw (lower Y objs in front)
     List<Guy> objsCpy = new ArrayList<Guy>(objs);
-    int highestY = 0;
+    float highestY = 0;
     int drawIdx = -1;
     while(objsCpy.size() > 0)
     {
@@ -428,11 +491,12 @@ public class JTGame
       for (int i = 0; i < objsCpy.size(); ++i)
       {
         Guy obj = objsCpy.get(i);
-        
-        if (obj.tile.y*2+obj.tile.off > highestY || drawIdx == -1)
+        // minus .5 if they're dead
+        float currY = obj.tile.y*2+obj.tile.off+(obj.isDead()?.5f:0);
+        if (currY > highestY || drawIdx == -1)
         {
           drawIdx = i;
-          highestY = obj.tile.y*2+obj.tile.off;
+          highestY = currY;
         }
       }
       Guy closestObj = objsCpy.remove(drawIdx);
@@ -447,9 +511,9 @@ public class JTGame
       Fireball fb = projectiles.get(i);
       fb.draw(sb);
     }
-	// now draw the selected guy's GUI
-	if (selectedGuy != null)
-		selectedGuy.drawGUI(sb, null);
+    // now draw the selected guy's GUI
+    if (selectedGuy != null)
+      selectedGuy.drawGUI(sb, null);
     /* old draw funct
     for (int i = 0; i < objs.size(); ++i)
     {

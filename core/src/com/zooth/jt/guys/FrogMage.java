@@ -18,6 +18,7 @@ public class FrogMage extends BlackMage
   {
     super();
     maxHp = 2;
+    removeAction(Action.DEFEND);
   }
   @Override
   public float characterHeight()
