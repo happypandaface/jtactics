@@ -30,8 +30,11 @@ to their possibleActions array
 */
 public class Action
 {
+  public JTGame game;
+
   public static final int FIREBALL = 1;
   public static final int DEFEND = 2;
+  public static final int SPIRIT_BURST = 3;
   // returns the gui texture of the action
   public static Texture getTex(int type)
   {
@@ -41,6 +44,8 @@ public class Action
         return JTactics.assets.fireball;
       case DEFEND:
         return JTactics.assets.shield;
+      case SPIRIT_BURST:
+        return JTactics.assets.boulder;
     }
     return null;
   }
@@ -53,6 +58,8 @@ public class Action
         return new Action();
       case DEFEND:
         return new ActShield();
+      case SPIRIT_BURST:
+        return new SpiritBurst();
     }
     return null;
   }
@@ -60,6 +67,10 @@ public class Action
   public Guy guy;
   public JTTile dirTile;// set outside
   public List<JTTile> tilesInDir;
+  public void setGame(JTGame game)
+  {
+    this.game = game;
+  }
   // called when we first click on the action
   public void selected(Guy g)
   {

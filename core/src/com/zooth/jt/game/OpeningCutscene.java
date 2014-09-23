@@ -13,6 +13,7 @@ import com.zooth.jt.*;
 import com.zooth.jt.cinematics.*;
 import com.zooth.jt.guys.*;
 import com.badlogic.gdx.graphics.*;
+import com.zooth.jt.objs.*;
 
 public class OpeningCutscene implements ExtendableFight.FightListener
 {
@@ -174,7 +175,6 @@ public class OpeningCutscene implements ExtendableFight.FightListener
       track.events.add(new TrackEvent(thief, "We're theives and we're going to rob you of course!"));
       track.events.add(new TrackEvent(youngGirl, "I'm scared!"));
       track.events.add(new TrackEvent(oldGuy, "Don't worry, we'll take these guys down!"));
-      //storyIdx = story.size();
       story.add(track);
     }
     {
@@ -279,7 +279,6 @@ public class OpeningCutscene implements ExtendableFight.FightListener
       track.events.add(new TrackEvent(frogMage, "Prepare to die! *croak*"));
       track.events.add(new TrackEvent(youngGirl, "There's a ton of them."));
       track.events.add(new TrackEvent(thief, "Looks like we'll have to team up for this one, amigos!"));
-      //storyIdx = story.size();
       story.add(track);
     }
     {
@@ -631,6 +630,7 @@ public class OpeningCutscene implements ExtendableFight.FightListener
     {
       Track track = new Track();
       track.bg = JTactics.assets.forestCave;
+      track.events.add(new TrackEvent(null, "Meanwhile, the wizard wanders into the forest in search of new magics!"));
       track.events.add(new TrackEvent(oldGuy, "Those guys think they're so smart."));
       track.events.add(new TrackEvent(oldGuy, "What FOOLS!"));
       track.events.add(new TrackEvent(oldGuy, "Where am I!"));
@@ -642,6 +642,7 @@ public class OpeningCutscene implements ExtendableFight.FightListener
       track.events.add(new TrackEvent(scaryEyes, "Enter and begin!"));
       track.events.add(new TrackEvent(scaryEyes, "But be weary! Many have died seeking my magic."));
       track.events.add(new TrackEvent(oldGuy, "There's a lot of idiots out there."));
+      //storyIdx = story.size();
       story.add(track);
     }
     {
@@ -650,6 +651,11 @@ public class OpeningCutscene implements ExtendableFight.FightListener
         public Texture getBg()
         {
           return JTactics.assets.caveFloor;
+        }
+        public void setupObstacles()
+        {
+          addBoulder(new Boulder(1, 2, 5));
+          addBoulder(new Boulder(1, 2, 4));
         }
         public void setupInPlay()
         {
@@ -675,7 +681,6 @@ public class OpeningCutscene implements ExtendableFight.FightListener
       track.events.add(new TrackEvent(scaryEyes, "Those were just some frogs!"));
       track.events.add(new TrackEvent(oldGuy, "Are you serious?"));
       track.events.add(new TrackEvent(scaryEyes, "THIS is the test!"));
-      storyIdx = story.size();
       story.add(track);
     }
     {
@@ -684,6 +689,11 @@ public class OpeningCutscene implements ExtendableFight.FightListener
         public Texture getBg()
         {
           return JTactics.assets.caveFloor;
+        }
+        public void setupObstacles()
+        {
+          addBoulder(new Boulder(1, 2, 5));
+          addBoulder(new Boulder(1, 2, 4));
         }
         public void setupInPlay()
         {
@@ -697,6 +707,228 @@ public class OpeningCutscene implements ExtendableFight.FightListener
           addObj(new Frog().setController(players.get(1)).setTile(0, 4, 3));
           addObj(new FrogMage().setController(players.get(1)).setTile(0, 4, 4));
           addObj(new Frog().setController(players.get(1)).setTile(0, 4, 5));
+        }
+      }.setFightListener(this));
+    }
+    {
+      Track track = new Track();
+      track.bg = JTactics.assets.forestCave;
+      track.events.add(new TrackEvent(oldGuy, "Okay, now give me your stupid spell. I bet it's crap anyway."));
+      track.events.add(new TrackEvent(scaryEyes, "Congradulations!"));
+      track.events.add(new TrackEvent(oldGuy, "Finally..."));
+      track.events.add(new TrackEvent(scaryEyes, "You have beaten the first test!"));
+      track.events.add(new TrackEvent(oldGuy, "There's more!?"));
+      track.events.add(new TrackEvent(scaryEyes, "Remember! Boulders can get in your way! But they can also crush your enemies!"));
+      track.events.add(new TrackEvent(scaryEyes, "Also you must have 2 actions left to push them!"));
+      track.events.add(new TrackEvent(scaryEyes, "(actions are the white things below your character)"));
+      track.events.add(new TrackEvent(oldGuy, "What? Actions"));
+      track.events.add(new TrackEvent(scaryEyes, "I wasn't talking to you, I was talking to the guy playing the game."));
+      track.events.add(new TrackEvent(oldGuy, "What guy?"));
+      track.events.add(new TrackEvent(scaryEyes, "You can't see him? Hmmm... very interesting."));
+      story.add(track);
+    }
+    {
+      story.add(new ExtendableFight()
+      {
+        public Texture getBg()
+        {
+          return JTactics.assets.caveFloor;
+        }
+        public void setupObstacles()
+        {
+          addBoulder(new Boulder(1, 2, 5));
+          addBoulder(new Boulder(1, 2, 4));
+        }
+        public void setupInPlay()
+        {
+          addHex(0, 2, 5, 2);
+          addHex(0, 3, 5, 1);
+          addHex(0, 4, 5, 2);
+        }
+        public void setupObjs()
+        {
+          addObj(new BlackMage().setController(players.get(0)).setTile(0, 1, 5));
+          addObj(new Frog().setController(players.get(1)).setTile(0, 4, 3));
+          addObj(new FrogKnight().setController(players.get(1)).setTile(0, 4, 4));
+          addObj(new Frog().setController(players.get(1)).setTile(0, 4, 5));
+        }
+      }.setFightListener(this));
+    }
+    {
+      Track track = new Track();
+      track.bg = JTactics.assets.forestCave;
+      track.events.add(new TrackEvent(oldGuy, "Am I done yet?"));
+      track.events.add(new TrackEvent(scaryEyes, "You have done well!"));
+      track.events.add(new TrackEvent(scaryEyes, "Prepare for the final test!"));
+      track.events.add(new TrackEvent(oldGuy, "This is lame. I'm out."));
+      track.events.add(new TrackEvent(scaryEyes, "No wait! Come back!"));
+      track.events.add(new TrackEvent(scaryEyes, "I was umm... joking... yes. You have done well! I will teach you the spell."));
+      track.events.add(new TrackEvent(scaryEyes, "But be weary."));
+      track.events.add(new TrackEvent(scaryEyes, "This spell is powerful but may cause you as much pain as your enemies."));
+      track.events.add(new TrackEvent(scaryEyes, "For it uses the life force of either you or your friends to cast!"));
+      track.events.add(new TrackEvent(oldGuy, "Ooh, very nice!"));
+      storyIdx = story.size();
+      story.add(track);
+    }
+    {
+      Track track = new Track();
+      track.bg = JTactics.assets.temple;
+      track.events.add(new TrackEvent(null, "Back at the local temple, the head priest holds off waves of frogs"));
+      track.events.add(new TrackEvent(headPriest, "This is an onslaught!"));
+      track.events.add(new TrackEvent(blueMage, "Many of our fighters are wounded and need rest!"));
+      track.events.add(new TrackEvent(headPriest, "Send them back in!"));
+      track.events.add(new TrackEvent(youngGirl, "But sir, they may die in battle!"));
+      track.events.add(new TrackEvent(headPriest, "They'll die as prisoners if we lose this fight!"));
+      story.add(track);
+    }
+    {
+      story.add(new ExtendableFight()
+      {
+        public Texture getBg()
+        {
+          return JTactics.assets.pinkRoom;
+        }
+        public void setupObstacles()
+        {
+        }
+        public void setupInPlay()
+        {
+          addHex(0, 2, 5, 2);
+          addHex(0, 3, 5, 1);
+          addHex(0, 4, 5, 2);
+        }
+        public void setupObjs()
+        {
+          addObj(new HeadPriest().setController(players.get(0)).setTile(0, 1, 5)).hp = 2;
+          addObj(new WhiteMage().setController(players.get(0)).setTile(1, 1, 5)).hp = 2;
+          addObj(new GenericWhiteMage().setController(players.get(0)).setTile(0, 1, 4)).hp = 2;
+          addObj(new GenericWhiteMage().setController(players.get(0)).setTile(1, 1, 4)).hp = 1;
+          addObj(new Frog().setController(players.get(1)).setTile(0, 4, 3));
+          addObj(new Frog().setController(players.get(1)).setTile(1, 4, 3));
+          addObj(new FrogKnight().setController(players.get(1)).setTile(0, 4, 4));
+          addObj(new FrogKnight().setController(players.get(1)).setTile(1, 3, 4));
+          addObj(new Frog().setController(players.get(1)).setTile(1, 3, 3));
+          addObj(new FrogMage().setController(players.get(1)).setTile(1, 4, 4));
+          addObj(new Frog().setController(players.get(1)).setTile(0, 4, 5));
+        }
+      }.setFightListener(this));
+    }
+    {
+      Track track = new Track();
+      track.bg = JTactics.assets.temple;
+      track.events.add(new TrackEvent(headPriest, "Another wave, there!"));
+      track.events.add(new TrackEvent(blueMage, "Who's that with them?"));
+      track.events.add(new TrackEvent(youngGirl, "Oh no, it's-"));
+      track.events.add(new TrackEvent(thief, "Hello friends! It's me again!"));
+      story.add(track);
+    }
+
+    {
+      story.add(new ExtendableFight()
+      {
+        public Texture getBg()
+        {
+          return JTactics.assets.pinkRoom;
+        }
+        public void endGame()
+        {
+          fl.endedFight();
+        }
+        // this is to make sure we only call endedFight once
+        boolean extEnding = false;
+        public boolean checkPause()
+        {
+          List<Guy> humanGuys = getObjs(players.get(0));
+          int health = 0;
+          for (int i = 0; i < humanGuys.size(); ++i)
+          {
+            Guy obj = humanGuys.get(i);
+            health += obj.hp;
+          }
+          if (health < 2)
+          {
+            if (!extEnding)
+              fl.endedFight();
+            extEnding = true;
+            return true;
+          }
+          return false;
+        }
+        public void setupObstacles()
+        {
+        }
+        public void setupInPlay()
+        {
+          addHex(0, 2, 5, 2);
+          addHex(0, 3, 5, 1);
+          addHex(0, 4, 5, 2);
+        }
+        public void setupObjs()
+        {
+          addObj(new HeadPriest().setController(players.get(0)).setTile(0, 1, 5)).hp = 2;
+          addObj(new WhiteMage().setController(players.get(0)).setTile(1, 1, 5)).hp = 2;
+          addObj(new GenericWhiteMage().setController(players.get(0)).setTile(0, 1, 4)).hp = 2;
+          addObj(new GenericWhiteMage().setController(players.get(0)).setTile(1, 1, 4)).hp = 1;
+          addObj(new Frog().setController(players.get(1)).setTile(0, 4, 3));
+          addObj(new Frog().setController(players.get(1)).setTile(1, 4, 3));
+          addObj(new FrogKnight().setController(players.get(1)).setTile(0, 4, 4));
+          addObj(new FrogKnight().setController(players.get(1)).setTile(1, 3, 4));
+          addObj(new Frog().setController(players.get(1)).setTile(1, 3, 3));
+          addObj(new FrogMage().setController(players.get(1)).setTile(1, 4, 4));
+          addObj(new Frog().setController(players.get(1)).setTile(0, 4, 5));
+          addObj(new Thief().setController(players.get(1)).setTile(0, 5, 6));
+          addObj(new Thief().setController(players.get(1)).setTile(0, 5, 4));
+          addObj(new Thief().setController(players.get(1)).setTile(0, 5, 5));
+        }
+      }.setFightListener(this));
+    }
+    {
+      Track track = new Track();
+      track.bg = JTactics.assets.temple;
+      track.events.add(new TrackEvent(frogKnight, "Surrender the secrets of the swamp temple to the frog queen! *croak*"));
+      track.events.add(new TrackEvent(headPriest, "Never!"));
+      track.events.add(new TrackEvent(oldGuy, "What's this secret everyone's talking about?"));
+      track.events.add(new TrackEvent(youngGirl, "You came back!"));
+      track.events.add(new TrackEvent(oldGuy, "Yeah, I gotta test this new spell on someone!"));
+      track.events.add(new TrackEvent(headPriest, "What is this new knowledge you've aquired?"));
+      track.events.add(new TrackEvent(oldGuy, "I learned a spell to make a teammate explode!"));
+      track.events.add(new TrackEvent(youngGirl, "Great."));
+      track.events.add(new TrackEvent(thief, "Hahaha! Have fun with that!"));
+      track.events.add(new TrackEvent(oldGuy, "It can also catch enemies in the explosion, of course."));
+      track.events.add(new TrackEvent(headPriest, "I'm willing to try anything! Let's do this!"));
+
+      story.add(track);
+    }
+    {
+      story.add(new ExtendableFight()
+      {
+        public Texture getBg()
+        {
+          return JTactics.assets.pinkRoom;
+        }
+        public void setupInPlay()
+        {
+          addHex(0, 2, 5, 2);
+          addHex(0, 3, 5, 1);
+          addHex(0, 4, 5, 2);
+        }
+        public void setupObjs()
+        {
+          addObj(new HeadPriest().setController(players.get(0)).setTile(0, 1, 5)).hp = 2;
+          addObj(new WhiteMage().setController(players.get(0)).setTile(1, 1, 5)).hp = 2;
+          addObj(new GenericWhiteMage().setController(players.get(0)).setTile(0, 1, 4)).hp = 2;
+          addObj(new GenericWhiteMage().setController(players.get(0)).setTile(1, 1, 4)).hp = 1;
+          addObj(new BlackMage().setController(players.get(0)).setTile(1, 1, 3).addAction(Action.SPIRIT_BURST));
+          addObj(new Frog().setController(players.get(1)).setTile(0, 4, 3));
+          addObj(new Frog().setController(players.get(1)).setTile(1, 4, 3));
+          addObj(new FrogKnight().setController(players.get(1)).setTile(0, 4, 4));
+          addObj(new FrogKnight().setController(players.get(1)).setTile(1, 3, 4));
+          addObj(new Frog().setController(players.get(1)).setTile(1, 3, 3));
+          addObj(new FrogMage().setController(players.get(1)).setTile(1, 4, 4));
+          addObj(new Frog().setController(players.get(1)).setTile(0, 4, 5));
+          addObj(new Thief().setController(players.get(1)).setTile(0, 5, 6));
+          addObj(new Thief().setController(players.get(1)).setTile(0, 5, 4));
+          addObj(new Thief().setController(players.get(1)).setTile(0, 5, 5));
         }
       }.setFightListener(this));
     }

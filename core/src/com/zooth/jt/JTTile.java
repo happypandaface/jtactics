@@ -9,26 +9,26 @@ public class JTTile
   int off = 0;
   int x = 0;
   int y = 0;
-  static class Direction
+  public static class Direction
   {
-    static int ZERO = 0;
-    static int N = 1;
-    static int NNE = 2;
-    static int NE = 3;
-    static int NEE = 4;
-    static int E = 5;
-    static int SEE = 6;
-    static int SE = 7;
-    static int SSE = 8;
-    static int S = 9;
-    static int SSW = 10;
-    static int SW = 11;
-    static int SWW = 12;
-    static int W = 13;
-    static int NWW = 14;
-    static int NW = 15;
-    static int NNW = 16;
-    static int NUM_DIRECTIONS = 16;
+    public static int ZERO = 0;
+    public static int N = 1;
+    public static int NNE = 2;
+    public static int NE = 3;
+    public static int NEE = 4;
+    public static int E = 5;
+    public static int SEE = 6;
+    public static int SE = 7;
+    public static int SSE = 8;
+    public static int S = 9;
+    public static int SSW = 10;
+    public static int SW = 11;
+    public static int SWW = 12;
+    public static int W = 13;
+    public static int NWW = 14;
+    public static int NW = 15;
+    public static int NNW = 16;
+    public static int NUM_DIRECTIONS = 16;
   }
   
   public JTTile(int off, int x, int y)
@@ -245,8 +245,8 @@ public class JTTile
           // but only if it's traversable
           Guy g = game.guyAt(currAdjTile);
           if ((g == null || g.checkAt(target)) &&
-            game.checkIsMovable(currAdjTile))// I guess we could end
-            // if it's the target, but oh well
+            game.checkIsPathable(currAdjTile))// I guess we could end
+                                              // if it's the target, but oh well
           {
             toTry.add(currAdjTile);
             parents.put(currAdjTile, currTile);

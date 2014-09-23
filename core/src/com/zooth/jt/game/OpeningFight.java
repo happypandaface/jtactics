@@ -19,6 +19,28 @@ public class OpeningFight extends JTGame
   {
     this.os = os;
   }
+  public String getEndMessage()
+  {
+    String endStr = "A Glitch Occurred!";//default string
+    // this was the old text:
+    // endStr = "Player "+(winner+1)+" wins!";
+    // it makes more sense if you know what player you
+    // are (which you don't in campaign, which is the
+    // only mode right now)
+
+    if (winner == JTGame.NO_WINNER)
+    {
+      endStr = "Everyone loses!";
+    }else
+    if (winner == 0)
+    {
+      endStr = "You win!"; 
+    }else
+    {
+      endStr = "You lose!"; 
+    }
+    return endStr;
+  }
   @Override
   public void setupInPlay()
   {
@@ -107,31 +129,70 @@ public class OpeningFight extends JTGame
           }else
           if (obj == selectedGuy && selectedGuy.hasAp(1) && !obj.inTransit)
           {// check if this is the selected guy, in which case do basic AI to see what to do.
-            List<JTTile> path = null;
-            for (int c = 0; c < objs.size(); ++c)
+            // first see if we can fireball
+            boolean chosenAdvice = false;
+            List<JTTile> outerTiles = obj.getAdjTiles(2);
+            List<JTTile> innerTiles = obj.getAdjTiles(1);
+            for (int c = 0; c < outerTiles.size()+innerTiles.size(); ++c)
             {
-              Guy currObj = objs.get(c);
-              if (currObj.controller != obj.controller && !currObj.isDead())
+              JTTile t = null;
+              if (c < outerTiles.size())
+                t = outerTiles.get(c);
+              else
+                t = innerTiles.get(c-outerTiles.size());
+              Guy g = this.guyAt(t);
+              if (g != null && !g.isDead())
               {
-                List<JTTile> currPath = currObj.tile.getPath(obj.tile, this);
-                if (path == null || currPath.size() < path.size())
-                  path = currPath;
+                if (!obj.inTransit && obj.canRange() && g.controller != players.get(0))
+                {
+                  pos = field.getPos(g.tile);
+                  
+                  offSetAmntX = -offSetAmnt;
+                  offSetAmntY = -offSetAmnt;
+                  drawRightOrLeft = 2;// right click
+                  chosenAdvice = true;
+                }else
+                if (!obj.inTransit && obj.canHeal() && g.controller == players.get(0) && g.hp < g.maxHp)
+                {
+                  pos = field.getPos(g.tile);
+                  
+                  offSetAmntX = -offSetAmnt;
+                  offSetAmntY = -offSetAmnt;
+                  drawRightOrLeft = 2;// right click
+                  chosenAdvice = true;
+                }
               }
             }
-            // because the first node in the path, is the
-            // tile we're currently on, we use the second
-            // on
-            if (path != null && path.size() > 1)
+            if (!chosenAdvice)
             {
-              JTTile tarTile = path.get(1);
-              pos = field.getPos(tarTile);
-              
-              offSetAmntX = -offSetAmnt;
-              offSetAmntY = -offSetAmnt;
-              drawRightOrLeft = 2;// right click
+              List<JTTile> path = null;
+              for (int c = 0; c < objs.size(); ++c)
+              {
+                Guy currObj = objs.get(c);
+                if (currObj.controller != obj.controller && !currObj.isDead())
+                {
+                  List<JTTile> currPath = currObj.tile.getPath(obj.tile, this);
+                  if (path == null || currPath.size() < path.size())
+                    path = currPath;
+                }
+              }
+              // because the first node in the path, is the
+              // tile we're currently on, we use the second
+              // on
+              if (path != null && path.size() > 1)
+              {
+                JTTile tarTile = path.get(1);
+                pos = field.getPos(tarTile);
+                
+                offSetAmntX = -offSetAmnt;
+                offSetAmntY = -offSetAmnt;
+                drawRightOrLeft = 2;// right click
+              }
             }
           }
-          if (drawRightOrLeft > 0)
+          // draw the mouse tutorial only if we were told
+          // above, and there's no winner
+          if (drawRightOrLeft > 0 && winner == -1)
           {
             // this will do good graphics for either
             sb.setColor(1,1,1,currTime<.5f?currTime*2f:currTime<maxTime-.5f?1:-2f*(currTime-maxTime));

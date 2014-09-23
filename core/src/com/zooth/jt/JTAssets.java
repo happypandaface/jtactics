@@ -44,6 +44,8 @@ public class JTAssets
   public Texture forestCave;
   public Texture scaryEyes;
   public Texture caveFloor;
+  public Texture boulder;
+  public Texture endTurn;
   public BitmapFont font;
 
   public void create()
@@ -79,6 +81,8 @@ public class JTAssets
     swampTemple= new Texture("swampTemple.jpg");
     scaryEyes= new Texture("scaryEyes.png");
     caveFloor= new Texture("caveFloor.png");
+    boulder= new Texture("boulder.png");
+    endTurn= new Texture("endTurn.png");
 
     {
       Pixmap p = new Pixmap(1, 1, Pixmap.Format.RGBA8888);

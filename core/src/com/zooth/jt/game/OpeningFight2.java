@@ -9,11 +9,11 @@ public class OpeningFight2 extends OpeningFight
   public void setupObjs()
   {
     super.setupObjs();
-    objs.remove(objs.size()-1);
+    //objs.remove(objs.size()-1);
     {
       Guy g = new FrogMage();
       g.setController(players.get(1));
-      g.tile = new JTTile(0, 4, 5);
+      g.tile = new JTTile(0, 3, 5);
       addObj(g);
     }
   }

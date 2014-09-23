@@ -105,13 +105,6 @@ public class JTPlayer
                   // on
                   JTTile tarTile = path.get(1);
                   game.target(obj, tarTile);
-                }else
-                {
-                  // just sit here
-                  // but first make sure there's no other attacks
-                  // going
-                  if (!attackOccurring)
-                    obj.useAp(1);
                 }
                 /* random directions:
                 List<JTTile> innerTiles = obj.getAdjTiles(1);
@@ -121,6 +114,12 @@ public class JTPlayer
                 */
               }
             }
+            // if we couldn't think of an action
+            // just sit here and use an AP
+            // but first make sure there's no other attacks
+            // going, b/c that could prevent action gen
+            if (!obj.inTransit && !attackOccurring)
+              obj.useAp(1);
           }
           //break; // with this break in, the computer does moves one at a time
         }

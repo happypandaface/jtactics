@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.Input.Keys;
 import com.zooth.jt.game.*;
 import com.zooth.jt.guys.*;
+import com.zooth.jt.objs.*;
 
 public class JTGame
 {
@@ -22,10 +23,22 @@ public class JTGame
   public List<JTPlayer> players;
   public JTPlayer currPlayer = null;
   public List<JTTile> obstacles;
+  public List<Boulder> boulders;
   public List<JTTile> inPlay;// the tiles that are in play and drawn
   public boolean startedGame;
-  public int winner = -1;
+  // winner conditions
+  // anything above "IN_PROGRESS"
+  // is the idx of the winner in player
+  public static int IN_PROGRESS = -1;
+  public static int NO_WINNER = -2; // this means everyone lost
+                                    // can be caused by explosions
+  public int winner = IN_PROGRESS;
   public int turnsTaken = 0;
+  // the bottom bar with gui options:
+  static int NOTHING  = 0;
+  static int END_TURN = 1;
+  public int botBarAct = NOTHING;
+  public float botBarHeight;
 
   public JTGame()
   {
@@ -54,10 +67,13 @@ public class JTGame
   public void startGame()
   {
     // essential variables
+    botBarHeight = Gdx.graphics.getHeight()*.15f;
+    winner = IN_PROGRESS;
     startedGame = true;
     selectedGuy = null;
     players = new ArrayList<JTPlayer>();
     obstacles = new ArrayList<JTTile>();
+    boulders = new ArrayList<Boulder>();
     inPlay = new ArrayList<JTTile>();
     objs = new ArrayList<Guy>();
     // this will make the loop get the first player
@@ -128,6 +144,7 @@ public class JTGame
   }
   public void setupObstacles()
   {
+    
     /* we now use inPlay to make boundaries because it looks nicer with backgrounds
     int fieldW = 8;
     int xTopOff = 1;
@@ -169,16 +186,25 @@ public class JTGame
       addObj(g);
     }
   }
+  // setup and add a boulder correctly
+  public void  addBoulder(Boulder b)
+  {
+    b.setGame(this);
+    boulders.add(b);
+  }
+  // setup and add a player correctly
   public void  addPlayer(JTPlayer p)
   {
     p.setGame(this);
     players.add(p);
   }
-  public void addObj(Guy g)
+  // setup and add a guyObject correctly
+  public Guy addObj(Guy g)
   {
     g.setGame(this);
     g.reset();
     objs.add(g);
+    return g;
   }
   
   public List<Guy> getObjs(JTPlayer p)
@@ -223,15 +249,33 @@ public class JTGame
   public boolean checkEndTurn()
   {
     int left = 0;
+    boolean inTransit = false;
     for (int i = 0; i < currPlayersObjs.size(); ++i)
     {
       Guy obj = currPlayersObjs.get(i);
+      if (obj.inTransit)
+        inTransit = true;
       if (!obj.okayForTurnEnd())
         left++;
     }
-    return (left == 0);
+    // consume the bottom bar action if it's to end the turn
+    int botBarActTemp = botBarAct;
+    if (botBarAct == END_TURN)
+      botBarAct = NOTHING;
+    return (left == 0) || (!inTransit && currPlayer.type == JTPlayer.HUMAN && (Gdx.input.isKeyJustPressed(Keys.SPACE) || botBarActTemp == END_TURN));
   }
 
+  // returns the first boulder at the tile
+  public Boulder boulderAt(JTTile t)
+  {
+    for (int i = 0; i < boulders.size(); ++i)
+    {
+      Boulder b = boulders.get(i);
+      if (b.checkAt(t))
+        return b;
+    }
+    return null; 
+  }
   // returns the first guy at the tile
   // who isn't dead
   public Guy guyAt(JTTile t)
@@ -259,6 +303,30 @@ public class JTGame
     }
     return false;
   }
+  // sees if that tile is pathable
+  // which is just the above function
+  // plus checking for boulders
+  // (they take 2 ap to move)
+  public boolean checkIsPathable(JTTile t)
+  {
+    for (int i = 0; i < boulders.size(); ++i)
+    {
+      if (boulders.get(i).checkAt(t))
+        return false;
+    }
+    for (int i = 0; i < obstacles.size(); ++i)
+    {
+      if (obstacles.get(i).check(t))
+        return false;
+    }
+    for (int i = 0; i < inPlay.size(); ++i)
+    {
+      if (inPlay.get(i).check(t))
+        return true;
+    }
+    return false;
+  }
+
   // this function makes an object try to 'target' a tile
   // this could mean healing the unit there, or 
   // attacking an enemy at the tile, or simple
@@ -311,6 +379,40 @@ public class JTGame
   {
     return false;
   }
+  public int checkGUIClick(Vector2 v)
+  {
+    float width = botBarHeight;
+    float height = botBarHeight;
+    if (v.x > Gdx.graphics.getWidth()-width &&
+        v.y < height)
+    {
+      // do logic
+      return END_TURN;
+    }
+    return NOTHING;
+  }
+  public String getEndMessage()
+  {
+    String endStr = "A Glitch Occurred!";//default string
+    // this was the old text:
+    // endStr = "Player "+(winner+1)+" wins!";
+    // it makes more sense if you know what player you
+    // are (which you don't in campaign, which is the
+    // only mode right now)
+
+    if (winner == JTGame.NO_WINNER)
+    {
+      endStr = "Everyone loses!";
+    }else
+    if (winner == 0)
+    {
+      endStr = "You win!"; 
+    }else
+    {
+      endStr = "You lose!"; 
+    }
+    return endStr;
+  }
   public void render(SpriteBatch sb)
   {
     field.render(sb, null);
@@ -354,7 +456,8 @@ public class JTGame
       }else
       {
         // check to see if it should be someone else's turn
-        if (checkEndTurn() || Gdx.input.isKeyJustPressed(Keys.SPACE))
+        boolean shouldEndTurn = checkEndTurn();
+        if (shouldEndTurn || Gdx.input.isKeyJustPressed(Keys.D))
         {
           // this guy's turn is over, switch players
           int idx = players.indexOf(currPlayer);
@@ -402,10 +505,19 @@ public class JTGame
           }else
           if (Gdx.input.isButtonPressed(0))// && !usedMove)
           {
-            // check if the selectedGuy's GUI was clicked
+            // go through possible guis to click,
+            // if none were clicked try to select a character
             boolean guiClicked = false;
-            if (selectedGuy != null)
-              guiClicked = selectedGuy.checkGUIClick(new Vector2(Gdx.input.getX(),Gdx.graphics.getHeight()-Gdx.input.getY()));
+            // check if the normal GUI was clicked:
+            botBarAct = checkGUIClick(new Vector2(Gdx.input.getX(),Gdx.graphics.getHeight()-Gdx.input.getY()));
+            if (botBarAct != 0)
+              guiClicked = true;
+            // check if the selectedGuy's GUI was clicked
+            if (!guiClicked)
+            {
+              if (selectedGuy != null)
+                guiClicked = selectedGuy.checkGUIClick(new Vector2(Gdx.input.getX(),Gdx.graphics.getHeight()-Gdx.input.getY()));
+            }
             if (!guiClicked)
             {
               // alert the last selected guy
@@ -502,6 +614,12 @@ public class JTGame
       Guy closestObj = objsCpy.remove(drawIdx);
       closestObj.draw(sb, null);
     }
+    // draw boulders
+    for (int i = 0; i < boulders.size(); ++i)
+    {
+      Boulder b = boulders.get(i);
+      b.draw(sb);
+    }
     // done calling the draw funct on objects
     // (which adds projectiles)
     // this means all the projectiles have been added
@@ -526,8 +644,8 @@ public class JTGame
       if (playersLeft.size() == 0)
       {
         // no one won:
-        winner = -1;
-        endStr = "Everyone loses!";
+        winner = -2;
+        endStr = getEndMessage();
       }else
       {
         // figure out who won
@@ -540,7 +658,7 @@ public class JTGame
           }
         }
         winner = playerNum;
-        endStr = "Player "+(playerNum+1)+" wins!";
+        endStr = getEndMessage();
       }
       BitmapFont.TextBounds tb = JTactics.assets.font.getWrappedBounds(endStr, Gdx.graphics.getWidth());
       float midX = Gdx.graphics.getWidth()/2f;
@@ -554,6 +672,14 @@ public class JTGame
       {
         endGame();
       }
+    }else
+    if (currPlayer == players.get(0))
+    {
+      // draw the end turn button
+      float width = botBarHeight;
+      float height = botBarHeight;
+      sb.setColor(1, 1, 1, 1);
+      sb.draw(JTactics.assets.endTurn, Gdx.graphics.getWidth()-width, 0, width, height);
     }
   }
 }

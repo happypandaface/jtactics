@@ -17,6 +17,7 @@ public class BlackMage extends Guy
   {
     super();
     possibleActions.add(Action.FIREBALL);
+    //possibleActions.add(Action.SPIRIT_BURST);
     //possibleActions.add(Action.DEFEND);
   }
   @Override

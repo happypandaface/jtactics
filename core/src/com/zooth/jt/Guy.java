@@ -10,6 +10,8 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.*;
 import com.zooth.jt.game.*;
 import java.util.*;
+import com.zooth.jt.objs.*;
+import com.zooth.jt.actions.*;
 
 public class Guy
 {
@@ -188,22 +190,45 @@ public class Guy
     if (!inTransit)
     {
       Guy guyAt = game.guyAt(t);
-      if (!t.check(tile) && canMove(t) && game.checkIsMovable(t) && (guyAt == null || guyAt.isDead()))
+      Boulder boulderAt = game.boulderAt(t);
+      // check if an action was taken
+      // used to clear the queue if no action is taken
+      boolean actionTaken = false;
+      if (!t.check(tile) && canMove(t) && boulderAt == null && game.checkIsMovable(t) && (guyAt == null || guyAt.isDead()))
       {
         destTile = t;
         inTransit = true;
         actionType = MOVE;
         time = 0;
         useAp(1);
+        resetArmor();// if you move, you lose your armor
+        actionTaken = true;// not used b/c of return, but
+                           // may be used in newer code
         return true;
-      }else
+      }
+      if (boulderAt != null)
+      {
+        // move the boulder if we can
+        BoulderPush b = new BoulderPush();
+        b.setGame(game);
+        b.tarBoulder = boulderAt;
+        b.guy = this;
+        if (b.canCast(this))
+        {
+          currAction = b;
+          b.selected(this);
+          actionTaken = true;
+          resetArmor();// if you move, you lose your armor
+        }
+      }
+      if (actionTaken == false)
       {
         // we couldn't do a move in the chain, clear the rest
         actionQueue.clear();
       }
     }else
-    {
-      // this should check and return true if possible
+    {// happens if we were in transit
+      // this should check and return true if possible (very difficult)
       if (ap-actionQueue.size() > 0)
       {
         actionQueue.add(t);
@@ -235,10 +260,17 @@ public class Guy
       armor = 0;
     }
   }
+  // resets when you take an action 
+  public void resetArmor()
+  {
+    armor = 0;
+  }
   // used by ActShield to give armor
   public void getArmor(Guy g, int amnt)
   {
-    armor += amnt;
+    if (armor == 0)
+      armor = 1;
+//    armor += amnt;
   }
   // called when the game starts
   public void reset()
@@ -266,7 +298,14 @@ public class Guy
     else // we're dead:
       ap = 0;
   }
-
+  
+  // adds an action to possible
+  // actions
+  public Guy addAction(int act)
+  {
+    possibleActions.add(act);
+    return this;
+  }
   // allows easy addition (linking)
   public Guy setController(JTPlayer p)
   {
