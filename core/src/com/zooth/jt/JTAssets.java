@@ -46,6 +46,8 @@ public class JTAssets
   public Texture caveFloor;
   public Texture boulder;
   public Texture endTurn;
+  public Texture linearUpFade;
+  public Texture starPower;
   public BitmapFont font;
 
   public void create()
@@ -83,6 +85,8 @@ public class JTAssets
     caveFloor= new Texture("caveFloor.png");
     boulder= new Texture("boulder.png");
     endTurn= new Texture("endTurn.png");
+    linearUpFade= new Texture("linearUpFade.png");
+    starPower= new Texture("starPower.png");
 
     {
       Pixmap p = new Pixmap(1, 1, Pixmap.Format.RGBA8888);

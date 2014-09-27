@@ -35,6 +35,7 @@ public class Action
   public static final int FIREBALL = 1;
   public static final int DEFEND = 2;
   public static final int SPIRIT_BURST = 3;
+  public static final int INVINCIBILITY = 4;
   // returns the gui texture of the action
   public static Texture getTex(int type)
   {
@@ -46,6 +47,8 @@ public class Action
         return JTactics.assets.shield;
       case SPIRIT_BURST:
         return JTactics.assets.boulder;
+      case INVINCIBILITY:
+        return JTactics.assets.starPower;
     }
     return null;
   }
@@ -60,6 +63,8 @@ public class Action
         return new ActShield();
       case SPIRIT_BURST:
         return new SpiritBurst();
+      case INVINCIBILITY:
+        return new Invincibility();
     }
     return null;
   }
@@ -94,6 +99,10 @@ public class Action
   public boolean canCast(Guy g)
   {
     return g.hasAp(2);
+  }
+  public void draw(SpriteBatch sb, Vector2 pos, float w, float h, float time)
+  {
+    
   }
   
   public Vector2 step(float time)

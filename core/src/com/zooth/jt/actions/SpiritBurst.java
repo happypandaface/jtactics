@@ -72,13 +72,13 @@ public class SpiritBurst extends Action
   public void end()
   {
     List<JTTile> tiles = tar.getAdjTiles(1);
-    tar.getDamaged(guy, 2);
+    tar.getDamaged(guy, 1);
     for (int i = 0; i < tiles.size(); ++i)
     {
       Guy hit = guy.game.guyAt(tiles.get(i));
       if (hit != null)
       {
-        hit.getDamaged(guy, 2);
+        hit.getDamaged(guy, 1);
       }
     }
     guy.shutdownAction();

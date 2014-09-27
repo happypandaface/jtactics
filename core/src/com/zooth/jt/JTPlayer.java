@@ -45,7 +45,7 @@ public class JTPlayer
               {
                 JTTile t = outerTiles.get(c);
                 Guy g = game.guyAt(t);
-                if (g != null && !g.isDead())
+                if (g != null && !g.isDead() && (!g.isInvincible() || g.controller == this))
                 {
                   if (!obj.inTransit)
                     game.target(obj, t);
@@ -60,7 +60,7 @@ public class JTPlayer
                 {
                   JTTile t = innerTiles.get(c);
                   Guy g = game.guyAt(t);
-                  if (g != null && !g.isDead())
+                  if (g != null && !g.isDead() && (!g.isInvincible() || g.controller == this))
                   {
                     if (!obj.inTransit)
                       game.target(obj, t);
@@ -90,7 +90,7 @@ public class JTPlayer
                 for (int c = 0; c < objs.size(); ++c)
                 {
                   Guy currObj = objs.get(c);
-                  if (currObj.controller != obj.controller && !currObj.isDead())
+                  if (currObj.controller != obj.controller && !currObj.isDead() && !currObj.isInvincible())
                   {
                     List<JTTile> currPath = currObj.tile.getPath(obj.tile, game);
                     if (path == null || (currPath != null && currPath.size() < path.size()))

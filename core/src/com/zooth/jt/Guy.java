@@ -25,6 +25,7 @@ public class Guy
   public JTPlayer controller;
   public int ap = 0;
   public int hp = 0;
+  public int invincTurns = 0;
   public int armor= 0;
   public static int NOTHING = 0;
   public static int ATTACK = 1;
@@ -249,15 +250,19 @@ public class Guy
   }
   public void getDamaged(Guy g, int amnt)
   {
-    // deal damage to our armor first
-    armor -= amnt;
-    // check if the damage got through our armor
-    if (armor < 0)
+    // make sure we're not invincible
+    if (invincTurns == 0)
     {
-      // deal damage that got through armor
-      hp += armor;
-      // make sure we dont have negative armor
-      armor = 0;
+      // deal damage to our armor first
+      armor -= amnt;
+      // check if the damage got through our armor
+      if (armor < 0)
+      {
+        // deal damage that got through armor
+        hp += armor;
+        // make sure we dont have negative armor
+        armor = 0;
+      }
     }
   }
   // resets when you take an action 
@@ -275,6 +280,7 @@ public class Guy
   // called when the game starts
   public void reset()
   {
+    invincTurns = 0;
     hp = maxHp;
     ap = 0;
   }
@@ -289,6 +295,10 @@ public class Guy
   }
   public void newTurn()
   {
+    // if we have turns of invincibility
+    // decrement it
+    if (invincTurns > 0)
+      invincTurns--;
     // if we have enough hp, give full ap
     if (hp > 1)
       ap = maxAp;
@@ -353,6 +363,10 @@ public class Guy
     // this returns true if the character would
     // be fine with ending it's turn
     return (!inTransit && (hp <= 0 || ap == 0));
+  }
+  public boolean isInvincible()
+  {
+    return invincTurns > 0;
   }
   public boolean isDead()
   {
@@ -588,6 +602,17 @@ public class Guy
     if (isDead())
       sb.setColor(0, 0, 0, 1);
     drawTex(sb, getTexture(), width, height*characterHeight(), 0, 0, pos);
+    if (actionType == DOING_ACTION && inTransit)
+    {
+      currAction.draw(sb, pos, width, height, time);
+    }
+    // if we're invincible:
+    if (isInvincible())
+    {
+      sb.setColor(1, 1, 1, 1);
+      float size = (float)(Math.sin(1*Math.PI)*1.5f+1f);
+      drawTex(sb, JTactics.assets.linearUpFade, width*size, height*size, 0, 0, pos);
+    }
     if (actionType == HEAL && inTransit)
     {
       sb.setColor(1, 1, 1, 1);

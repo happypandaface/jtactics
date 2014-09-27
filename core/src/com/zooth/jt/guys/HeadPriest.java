@@ -13,6 +13,11 @@ import java.util.*;
 
 public class HeadPriest extends Guy
 {
+  public HeadPriest()
+  {
+    super();
+    possibleActions.add(Action.INVINCIBILITY);
+  }
   @Override
   public Texture getTexture()
   {

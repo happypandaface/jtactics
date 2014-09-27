@@ -872,7 +872,6 @@ public class OpeningCutscene implements ExtendableFight.FightListener
           addObj(new Frog().setController(players.get(1)).setTile(0, 4, 3));
           addObj(new Frog().setController(players.get(1)).setTile(1, 4, 3));
           addObj(new FrogKnight().setController(players.get(1)).setTile(0, 4, 4));
-          addObj(new FrogKnight().setController(players.get(1)).setTile(1, 3, 4));
           addObj(new Frog().setController(players.get(1)).setTile(1, 3, 3));
           addObj(new FrogMage().setController(players.get(1)).setTile(1, 4, 4));
           addObj(new Frog().setController(players.get(1)).setTile(0, 4, 5));
@@ -922,7 +921,6 @@ public class OpeningCutscene implements ExtendableFight.FightListener
           addObj(new Frog().setController(players.get(1)).setTile(0, 4, 3));
           addObj(new Frog().setController(players.get(1)).setTile(1, 4, 3));
           addObj(new FrogKnight().setController(players.get(1)).setTile(0, 4, 4));
-          addObj(new FrogKnight().setController(players.get(1)).setTile(1, 3, 4));
           addObj(new Frog().setController(players.get(1)).setTile(1, 3, 3));
           addObj(new FrogMage().setController(players.get(1)).setTile(1, 4, 4));
           addObj(new Frog().setController(players.get(1)).setTile(0, 4, 5));
