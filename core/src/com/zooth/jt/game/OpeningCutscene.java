@@ -767,7 +767,7 @@ public class OpeningCutscene implements ExtendableFight.FightListener
       track.events.add(new TrackEvent(scaryEyes, "This spell is powerful but may cause you as much pain as your enemies."));
       track.events.add(new TrackEvent(scaryEyes, "For it uses the life force of either you or your friends to cast!"));
       track.events.add(new TrackEvent(oldGuy, "Ooh, very nice!"));
-      storyIdx = story.size();
+      //storyIdx = story.size();
       story.add(track);
     }
     {
@@ -929,6 +929,25 @@ public class OpeningCutscene implements ExtendableFight.FightListener
           addObj(new Thief().setController(players.get(1)).setTile(0, 5, 5));
         }
       }.setFightListener(this));
+    }
+    {
+      Track track = new Track();
+      track.bg = JTactics.assets.temple;
+      track.events.add(new TrackEvent(thief, "Looks like I chose the wrong side."));
+      track.events.add(new TrackEvent(frogKnight, "*croak* It seems you have bested us today."));
+      track.events.add(new TrackEvent(frogKnight, "But the frogs will be back. And in greater numbers!"));
+      track.events.add(new TrackEvent(headPriest, "Never!"));
+      track.events.add(new TrackEvent(oldGuy, "What's this secret everyone's talking about?"));
+      track.events.add(new TrackEvent(youngGirl, "You came back!"));
+      track.events.add(new TrackEvent(oldGuy, "Yeah, I gotta test this new spell on someone!"));
+      track.events.add(new TrackEvent(headPriest, "What is this new knowledge you've aquired?"));
+      track.events.add(new TrackEvent(oldGuy, "I learned a spell to make a teammate explode!"));
+      track.events.add(new TrackEvent(youngGirl, "Great."));
+      track.events.add(new TrackEvent(thief, "Hahaha! Have fun with that!"));
+      track.events.add(new TrackEvent(oldGuy, "It can also catch enemies in the explosion, of course."));
+      track.events.add(new TrackEvent(headPriest, "I'm willing to try anything! Let's do this!"));
+
+      story.add(track);
     }
     Track finalTrack = new Track();
     finalTrack.bg = JTactics.assets.openingBG;
